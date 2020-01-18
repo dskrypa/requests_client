@@ -8,6 +8,7 @@ import warnings
 from pathlib import Path
 
 URL_FMT = 'https://github.com/{user}/{repo}/blob/{branch}/{path}'
+INDEX_URL_FMT = 'https://github.com/{user}/{repo}'
 
 
 def get_github_url(app, path):
@@ -29,7 +30,9 @@ def html_page_context(app, pagename, templatename, context, doctree):
         warnings.warn('show_on_github required conf.py settings missing: {}'.format(missing))
         return
     if pagename == 'index':
-        context['show_on_github_url'] = get_github_url(app, '')
+        context['show_on_github_url'] = INDEX_URL_FMT.format(
+            user=app.config.show_on_github_user, repo=app.config.show_on_github_repo
+        )
     else:
         rst_src_dir = Path(app.builder.srcdir)
         src_dir = rst_src_dir.parents[1]
