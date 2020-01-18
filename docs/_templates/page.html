@@ -1,0 +1,10 @@
+{% extends "!page.html" %}
+{% block footer %}
+<script type="text/javascript">
+    {% if show_on_github_url %}
+    $(document).ready(function(){
+        $(".wy-breadcrumbs-aside").append('<a href="{{ show_on_github_url }}" target="_blank">View on Stash</a>');
+    })
+    {% endif %}
+</script>
+{% endblock %}

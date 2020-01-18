@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>requests_client.user_agent &mdash; Requests Client 2020.01.18 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link href="../../_static/rtd_custom.css" rel="stylesheet", type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Requests Client
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.client.html">Client Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.compat.html">Compatibility Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.user_agent.html">User Agent Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.utils.html">Utils Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Requests Client</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>requests_client.user_agent</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for requests_client.user_agent</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utilities for setting the User-Agent header for requests.</span>
+
+<span class="sd">:author: Doug Skrypa</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">.__version__</span> <span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;generate_user_agent&#39;</span><span class="p">,</span> <span class="s1">&#39;USER_AGENT_LIBS&#39;</span><span class="p">,</span> <span class="s1">&#39;USER_AGENT_BASIC&#39;</span><span class="p">,</span> <span class="s1">&#39;USER_AGENT_SCRIPT_CONTACT&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;USER_AGENT_SCRIPT_CONTACT_OS&#39;</span><span class="p">,</span> <span class="s1">&#39;USER_AGENT_SCRIPT_OS&#39;</span><span class="p">,</span> <span class="s1">&#39;USER_AGENT_SCRIPT_URL&#39;</span><span class="p">,</span> <span class="s1">&#39;USER_AGENT_SCRIPT_URL_OS&#39;</span>
+<span class="p">]</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">USER_AGENT_LIBS</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{py_impl}</span><span class="s1">/</span><span class="si">{py_ver}</span><span class="s1"> Requests/</span><span class="si">{requests_ver}</span><span class="s1"> RequestsClient/</span><span class="si">{rc_ver}</span><span class="s1">&#39;</span>
+<span class="n">USER_AGENT_BASIC</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">/</span><span class="si">{script_ver}</span><span class="s1"> &#39;</span> <span class="o">+</span> <span class="n">USER_AGENT_LIBS</span>
+<span class="n">USER_AGENT_SCRIPT_OS</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">/</span><span class="si">{script_ver}</span><span class="s1"> (</span><span class="si">{os_name}</span><span class="s1"> </span><span class="si">{os_rel}</span><span class="s1">; </span><span class="si">{arch}</span><span class="s1">) &#39;</span> <span class="o">+</span> <span class="n">USER_AGENT_LIBS</span>
+<span class="n">USER_AGENT_SCRIPT_CONTACT</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">/</span><span class="si">{script_ver}</span><span class="s1"> (</span><span class="si">{url}</span><span class="s1">; </span><span class="si">{email}</span><span class="s1">) &#39;</span> <span class="o">+</span> <span class="n">USER_AGENT_LIBS</span>
+<span class="n">USER_AGENT_SCRIPT_URL</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">/</span><span class="si">{script_ver}</span><span class="s1"> (</span><span class="si">{url}</span><span class="s1">) &#39;</span> <span class="o">+</span> <span class="n">USER_AGENT_LIBS</span>
+<span class="n">USER_AGENT_SCRIPT_URL_OS</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">/</span><span class="si">{script_ver}</span><span class="s1"> (</span><span class="si">{url}</span><span class="s1">; </span><span class="si">{os_name}</span><span class="s1"> </span><span class="si">{os_rel}</span><span class="s1">; </span><span class="si">{arch}</span><span class="s1">) &#39;</span> <span class="o">+</span> <span class="n">USER_AGENT_LIBS</span>
+<span class="n">USER_AGENT_SCRIPT_CONTACT_OS</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{script}</span><span class="s1">/</span><span class="si">{script_ver}</span><span class="s1"> (</span><span class="si">{url}</span><span class="s1">; </span><span class="si">{email}</span><span class="s1">; </span><span class="si">{os_name}</span><span class="s1"> </span><span class="si">{os_rel}</span><span class="s1">; </span><span class="si">{arch}</span><span class="s1">) &#39;</span> <span class="o">+</span> <span class="n">USER_AGENT_LIBS</span>
+
+
+<div class="viewcode-block" id="generate_user_agent"><a class="viewcode-back" href="../../requests_client.user_agent.html#requests_client.user_agent.generate_user_agent">[docs]</a><span class="k">def</span> <span class="nf">generate_user_agent</span><span class="p">(</span><span class="n">ua_format</span><span class="p">,</span> <span class="n">downgrade</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param str ua_format: User agent format string</span>
+<span class="sd">    :param bool downgrade: Allow a format downgrade if a given value is missing and a default template is used</span>
+<span class="sd">    :param kwargs: Value overrides or custom keys/values to use</span>
+<span class="sd">    :return str: The user agent string based on the given format and available system information</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arch</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">architecture</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">arch</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;bit&#39;</span><span class="p">):</span>
+        <span class="n">arch</span> <span class="o">=</span> <span class="s1">&#39;x</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arch</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;bit&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">top_level_frame_info</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">top_level_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getsourcefile</span><span class="p">(</span><span class="n">top_level_frame_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">.</span><span class="n">stem</span>
+        <span class="n">top_level_globals</span> <span class="o">=</span> <span class="n">top_level_frame_info</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">f_globals</span>
+        <span class="n">top_level_ver</span> <span class="o">=</span> <span class="n">top_level_globals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__version__&#39;</span><span class="p">,</span> <span class="s1">&#39;1.0&#39;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">top_level_globals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__url__&#39;</span><span class="p">)</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="n">top_level_globals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__author_email__&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Error determining top-level script info: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="n">top_level_name</span> <span class="o">=</span> <span class="s1">&#39;RequestsClient&#39;</span>
+        <span class="n">top_level_ver</span> <span class="o">=</span> <span class="s1">&#39;1.0&#39;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;script&#39;</span><span class="p">:</span> <span class="n">top_level_name</span><span class="p">,</span>                       <span class="c1"># some_script</span>
+        <span class="s1">&#39;script_ver&#39;</span><span class="p">:</span> <span class="n">top_level_ver</span><span class="p">,</span>                    <span class="c1"># 1.0</span>
+        <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">url</span><span class="p">,</span>                                     <span class="c1"># hxxp://example.org/</span>
+        <span class="s1">&#39;email&#39;</span><span class="p">:</span> <span class="n">email</span><span class="p">,</span>                                 <span class="c1"># example@fake.org</span>
+        <span class="s1">&#39;os_name&#39;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">(),</span>                   <span class="c1"># Windows</span>
+        <span class="s1">&#39;os_rel&#39;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">release</span><span class="p">(),</span>                   <span class="c1"># 10</span>
+        <span class="s1">&#39;arch&#39;</span><span class="p">:</span> <span class="n">arch</span><span class="p">,</span>                                   <span class="c1"># x64</span>
+        <span class="s1">&#39;py_impl&#39;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_implementation</span><span class="p">(),</span>    <span class="c1"># CPython</span>
+        <span class="s1">&#39;py_ver&#39;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_version</span><span class="p">(),</span>            <span class="c1"># 3.7.4</span>
+        <span class="s1">&#39;requests_ver&#39;</span><span class="p">:</span> <span class="n">requests</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span>           <span class="c1"># 2.22.0</span>
+        <span class="s1">&#39;rc_ver&#39;</span><span class="p">:</span> <span class="n">__version__</span><span class="p">,</span>                          <span class="c1"># 2020.01.18</span>
+    <span class="p">}</span>
+    <span class="n">info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">downgrade</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">)</span>       <span class="c1"># If overridden, use that value</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">email</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ua_format</span> <span class="o">==</span> <span class="n">USER_AGENT_SCRIPT_CONTACT_OS</span><span class="p">:</span>
+            <span class="n">ua_format</span> <span class="o">=</span> <span class="n">USER_AGENT_SCRIPT_URL_OS</span>
+        <span class="k">if</span> <span class="n">url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">email</span><span class="p">:</span>
+            <span class="n">info</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">email</span>
+        <span class="k">if</span> <span class="n">url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">email</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ua_format</span> <span class="o">==</span> <span class="n">USER_AGENT_SCRIPT_URL_OS</span><span class="p">:</span>
+            <span class="n">ua_format</span> <span class="o">=</span> <span class="n">USER_AGENT_SCRIPT_OS</span>
+    <span class="k">return</span> <span class="n">ua_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">info</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Doug Skrypa
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<script type="text/javascript">
+    
+</script>
+
+
+</body>
+</html>

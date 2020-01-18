@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>requests_client.client &mdash; Requests Client 2020.01.18 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link href="../../_static/rtd_custom.css" rel="stylesheet", type="text/css">
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Requests Client
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Modules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.client.html">Client Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.compat.html">Compatibility Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.user_agent.html">User Agent Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requests_client.utils.html">Utils Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Requests Client</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>requests_client.client</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for requests_client.client</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Facilitates submission of multiple requests for different endpoints to a single server.</span>
+
+<span class="sd">:author: Doug Skrypa</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">suppress</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">urlparse</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">.compat</span> <span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span> <span class="nn">.user_agent</span> <span class="kn">import</span> <span class="n">generate_user_agent</span><span class="p">,</span> <span class="n">USER_AGENT_SCRIPT_CONTACT_OS</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">rate_limited</span><span class="p">,</span> <span class="n">format_path_prefix</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;RequestsClient&#39;</span><span class="p">]</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">UrlPart</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Part of a URL.  Enables cached values that rely on this value to be reset if this value is changed&quot;&quot;&quot;</span>
+    <span class="n">_counter</span> <span class="o">=</span> <span class="n">count</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;_</span><span class="si">{}</span><span class="s1">#</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_counter</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">formatter</span> <span class="o">=</span> <span class="n">formatter</span>
+
+    <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">formatter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">formatter</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">instance</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;_url_fmt&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="RequestsClient"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient">[docs]</a><span class="k">class</span> <span class="nc">RequestsClient</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Facilitates submission of multiple requests for different endpoints to a single server.</span>
+
+<span class="sd">    :param str host_or_url: A hostname or host:port, or a URL from which the scheme, host, port, and path_prefix should</span>
+<span class="sd">      be derived.</span>
+<span class="sd">    :param str|int port: A port</span>
+<span class="sd">    :param str scheme: The URI scheme to use (http, https, etc.) (default: http)</span>
+<span class="sd">    :param str path_prefix: A URI path prefix to include on all URLs.  If provided, it may be overridden on a</span>
+<span class="sd">      per-request basis.  A ``/`` will be added to the beginning and end if it was not included.</span>
+<span class="sd">    :param bool raise_errors: Whether :meth:`Response.raise_for_status&lt;requests.Response.raise_for_status&gt;` should</span>
+<span class="sd">      be used to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request</span>
+<span class="sd">      basis.</span>
+<span class="sd">    :param dict headers: Headers that should be included in the session.</span>
+<span class="sd">    :param bool|str verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for</span>
+<span class="sd">      :func:`requests.request` for more information.</span>
+<span class="sd">    :param str|None user_agent_fmt: A format string to be used to generate the ``User-Agent`` header.  If a custom value</span>
+<span class="sd">      already exists in the provided ``headers``, then this format is not used.</span>
+<span class="sd">    :param int log_lvl: Log level to use when logging messages about the method/url when requests are made</span>
+<span class="sd">    :param bool log_params: Include query params in logged messages when requests are made</span>
+<span class="sd">    :param float rate_limit: Interval in seconds to wait between requests (default: no rate limiting).  If specified,</span>
+<span class="sd">      then a lock is used to prevent concurrent requests.</span>
+<span class="sd">    :param callable session_fn: A callable that returns a :class:`Session&lt;requests.Session&gt;` object.  Defaults to the</span>
+<span class="sd">      normal constructor for :class:`Session&lt;requests.Session&gt;`.  Allows users to perform other initialization tasks for</span>
+<span class="sd">      the session, such as adding an auth handler.</span>
+<span class="sd">    :param bool local_sessions: By default, sessions are shared between threads.  If this is specified, then sessions</span>
+<span class="sd">      are stored locally in each thread.</span>
+<span class="sd">    :param kwargs: Keyword arguments to pass to the given ``session_fn`` whenever a new session is initialized.  The</span>
+<span class="sd">      default constructor does not accept any arguments, so these should only be provided if ``session_fn`` is also</span>
+<span class="sd">      specified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scheme</span> <span class="o">=</span> <span class="n">UrlPart</span><span class="p">()</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">UrlPart</span><span class="p">()</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="n">UrlPart</span><span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">path_prefix</span> <span class="o">=</span> <span class="n">UrlPart</span><span class="p">(</span><span class="n">format_path_prefix</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">host_or_url</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raise_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">verify</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user_agent_fmt</span><span class="o">=</span><span class="n">USER_AGENT_SCRIPT_CONTACT_OS</span><span class="p">,</span> <span class="n">log_lvl</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">log_params</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">rate_limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">session_fn</span><span class="o">=</span><span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">,</span> <span class="n">local_sessions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;^[a-zA-Z]+://&#39;</span><span class="p">,</span> <span class="n">host_or_url</span><span class="p">):</span>      <span class="c1"># If the value begins with a scheme, assume it is a url</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">host_or_url</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">parsed</span><span class="o">.</span><span class="n">hostname</span>
+            <span class="n">port</span> <span class="o">=</span> <span class="n">port</span> <span class="ow">or</span> <span class="n">parsed</span><span class="o">.</span><span class="n">port</span>
+            <span class="n">scheme</span> <span class="o">=</span> <span class="n">scheme</span> <span class="ow">or</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span>
+            <span class="n">path_prefix</span> <span class="o">=</span> <span class="n">path_prefix</span> <span class="ow">or</span> <span class="n">parsed</span><span class="o">.</span><span class="n">path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host_or_url</span>
+            <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="ow">and</span> <span class="n">port</span><span class="p">:</span>
+                <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;Conflicting arguments: port provided twice (host_or_url=</span><span class="si">{!r}</span><span class="s1">, port=</span><span class="si">{!r}</span><span class="s1">)&#39;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">=</span> <span class="n">scheme</span> <span class="ow">or</span> <span class="s1">&#39;http&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_prefix</span> <span class="o">=</span> <span class="n">path_prefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_errors</span> <span class="o">=</span> <span class="n">raise_errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">user_agent_fmt</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="n">generate_user_agent</span><span class="p">(</span><span class="n">user_agent_fmt</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verify</span> <span class="o">=</span> <span class="n">verify</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_lvl</span> <span class="o">=</span> <span class="n">log_lvl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_params</span> <span class="o">=</span> <span class="n">log_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session_fn</span> <span class="o">=</span> <span class="n">session_fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">local_sessions</span> <span class="k">else</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_local</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span> <span class="k">if</span> <span class="n">local_sessions</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__session</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">rate_limit</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">rate_limited</span><span class="p">(</span><span class="n">rate_limit</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span> <span class="nf">_url_fmt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">host_port</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">:</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">://</span><span class="si">{}</span><span class="s1">/{{}}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme</span><span class="p">,</span> <span class="n">host_port</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RequestsClient.url_for"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.url_for">[docs]</a>    <span class="k">def</span> <span class="nf">url_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param str path: The URL path to retrieve</span>
+<span class="sd">        :param dict params: Request query parameters</span>
+<span class="sd">        :param bool relative: Whether the stored :attr:`.path_prefix` should be used</span>
+<span class="sd">        :return str: The full URL for the given path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">path</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_url_fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_prefix</span> <span class="o">+</span> <span class="n">path</span> <span class="k">if</span> <span class="n">relative</span> <span class="k">else</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">params</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">?</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">url</span></div>
+
+<div class="viewcode-block" id="RequestsClient._init_session"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient._init_session">[docs]</a>    <span class="k">def</span> <span class="nf">_init_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session_fn</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_session_kwargs</span><span class="p">)</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verify</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">session</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verify</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">session</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes a new session using the provided ``session_fn``, or returns the already created one if it already</span>
+<span class="sd">        exists.</span>
+
+<span class="sd">        :return: The :class:`Session&lt;requests.Session&gt;` that will be used for requests</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__session</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_session</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__session</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">session</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_session</span><span class="p">()</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">session</span>
+
+    <span class="nd">@session</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__session</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="RequestsClient.close"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Close the session, if it exists&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__session</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                    <span class="n">atexit</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__session</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__session</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">atexit</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">)</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local</span><span class="o">.</span><span class="n">session</span></div>
+
+<div class="viewcode-block" id="RequestsClient._log_req"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient._log_req">[docs]</a>    <span class="k">def</span> <span class="nf">_log_req</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">relative</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">log_params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">params</span> <span class="ow">and</span> <span class="p">(</span><span class="n">log_params</span> <span class="ow">or</span> <span class="p">(</span><span class="n">log_params</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_params</span><span class="p">)):</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_for</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="n">relative</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_lvl</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> -&gt; </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RequestsClient.request"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">raise_errors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">log_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Submit a request to the URL based on the given path, using the given HTTP method.</span>
+
+<span class="sd">        :param str method: HTTP method to use (GET/PUT/POST/etc.)</span>
+<span class="sd">        :param str path: The URL path to retrieve</span>
+<span class="sd">        :param bool relative: Whether the stored :attr:`.path_prefix` should be used</span>
+<span class="sd">        :param bool raise_errors: Whether :meth:`Response.raise_for_status&lt;requests.Response.raise_for_status&gt;` should</span>
+<span class="sd">          be used to raise an exception if the response has a 4xx/5xx status code.  Overrides the setting stored when</span>
+<span class="sd">          initializing :class:`RequestsClient`, if provided.  Setting this to False does not prevent exceptions caused</span>
+<span class="sd">          by anything other than 4xx/5xx errors from being raised.</span>
+<span class="sd">        :param bool log: Whether a message should be logged with the method and url.  The log level is set when</span>
+<span class="sd">          initializing :class:`RequestsClient`.</span>
+<span class="sd">        :param bool log_params: Whether query params should be logged, if ``log=True``.  Overrides the setting stored</span>
+<span class="sd">          when initializing :class:`RequestsClient`, if provided.</span>
+<span class="sd">        :param kwargs: Keyword arguments to pass to :meth:`Session.request&lt;requests.Session.request&gt;`</span>
+<span class="sd">        :return: The :class:`Response&lt;requests.Response&gt;` to the request</span>
+<span class="sd">        :raises: :class:`RequestException&lt;requests.RequestException&gt;` (or a subclass thereof) if the request failed.  If</span>
+<span class="sd">          the exception is caused by an HTTP error code, then a :class:`HTTPError&lt;requests.HTTPError&gt;` will be raised,</span>
+<span class="sd">          and the code can be accessed via the exception&#39;s ``.response.status_code`` attribute. If the exception is due</span>
+<span class="sd">          to a request or connection timeout, then a :class:`Timeout&lt;requests.Timeout&gt;` (or further subclass thereof)</span>
+<span class="sd">          will be raised, and the exception will not have a ``response`` property.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_for</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="n">relative</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_req</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">relative</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">),</span> <span class="n">log_params</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raise_errors</span> <span class="ow">or</span> <span class="p">(</span><span class="n">raise_errors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_errors</span><span class="p">):</span>
+            <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">resp</span></div>
+
+<div class="viewcode-block" id="RequestsClient.get"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RequestsClient.put"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.put">[docs]</a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RequestsClient.post"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.post">[docs]</a>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RequestsClient.delete"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RequestsClient.options"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;OPTIONS&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RequestsClient.head"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.head">[docs]</a>    <span class="k">def</span> <span class="nf">head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RequestsClient.patch"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.patch">[docs]</a>    <span class="k">def</span> <span class="nf">patch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="s1">&#39;PATCH&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Doug Skrypa
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+<script type="text/javascript">
+    
+</script>
+
+
+</body>
+</html>
