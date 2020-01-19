@@ -7,13 +7,13 @@ project_root = Path(__file__).resolve().parent
 with project_root.joinpath('requirements.txt').open('r', encoding='utf-8') as f:
     requirements = f.read().splitlines()
 
-with project_root.joinpath('readme.md').open('r', encoding='utf-8') as f:
+with project_root.joinpath('readme.rst').open('r', encoding='utf-8') as f:
     long_description = f.read()
 
 
 setup(
     name='requests_client',
-    version='2020.01.18',
+    version='2020.01.19',
     author='Doug Skrypa',
     author_email='dskrypa@gmail.com',
     description='Requests Client',
