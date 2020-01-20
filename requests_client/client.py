@@ -98,7 +98,7 @@ class RequestsClient:
             path_prefix = path_prefix or parsed.path
         else:
             self.host = host_or_url
-            if ':' in self.host and port:
+            if self.host and ':' in self.host and port:
                 fmt = 'Conflicting arguments: port provided twice (host_or_url={!r}, port={!r})'
                 raise ValueError(fmt.format(self.host, port))
 
