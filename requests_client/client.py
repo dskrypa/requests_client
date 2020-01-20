@@ -90,7 +90,7 @@ class RequestsClient:
             verify=None, user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS, log_lvl=logging.DEBUG, log_params=True,
             rate_limit=0, session_fn=requests.Session, local_sessions=False, **kwargs
     ):
-        if re.match('^[a-zA-Z]+://', host_or_url):      # If the value begins with a scheme, assume it is a url
+        if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
             parsed = urlparse(host_or_url)
             self.host = parsed.hostname
             port = port or parsed.port
