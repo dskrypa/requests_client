@@ -4,9 +4,6 @@ from setuptools import setup
 
 project_root = Path(__file__).resolve().parent
 
-with project_root.joinpath('requirements.txt').open('r', encoding='utf-8') as f:
-    requirements = f.read().splitlines()
-
 with project_root.joinpath('readme.rst').open('r', encoding='utf-8') as f:
     long_description = f.read()
 
