@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>requests_client.client &mdash; Requests Client 2020.01.18 documentation</title>
+  <title>requests_client.client &mdash; Requests Client 2020.01.20 documentation</title>
   
 
   
@@ -164,6 +164,7 @@
 <span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">urlparse</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">RequestException</span>
 
 <span class="kn">from</span> <span class="nn">.compat</span> <span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span> <span class="nn">.user_agent</span> <span class="kn">import</span> <span class="n">generate_user_agent</span><span class="p">,</span> <span class="n">USER_AGENT_SCRIPT_CONTACT_OS</span>
@@ -207,6 +208,11 @@
 <span class="sd">    :param bool raise_errors: Whether :meth:`Response.raise_for_status&lt;requests.Response.raise_for_status&gt;` should</span>
 <span class="sd">      be used to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request</span>
 <span class="sd">      basis.</span>
+<span class="sd">    :param class exc: A custom exception class to raise when an error is encountered.  Its init method must accept two</span>
+<span class="sd">      positional arguments: ``cause`` (either a :class:`Response&lt;requests.Response&gt;` or a :class:`RequestException</span>
+<span class="sd">      &lt;requests.RequestException&gt;` / a subclass thereof) and ``url`` (string).  When a response has a 4xx/5xx status</span>
+<span class="sd">      code and ``raise_errors`` is True, then the exception will be initialized with the response object.  For</span>
+<span class="sd">      non-code-based exceptions, the exception will be initialized with the original exception.</span>
 <span class="sd">    :param dict headers: Headers that should be included in the session.</span>
 <span class="sd">    :param bool|str verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for</span>
 <span class="sd">      :func:`requests.request` for more information.</span>
@@ -231,7 +237,7 @@
     <span class="n">path_prefix</span> <span class="o">=</span> <span class="n">UrlPart</span><span class="p">(</span><span class="n">format_path_prefix</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">host_or_url</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raise_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">host_or_url</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scheme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path_prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raise_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">verify</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">user_agent_fmt</span><span class="o">=</span><span class="n">USER_AGENT_SCRIPT_CONTACT_OS</span><span class="p">,</span> <span class="n">log_lvl</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">log_params</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">rate_limit</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">session_fn</span><span class="o">=</span><span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">,</span> <span class="n">local_sessions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
@@ -259,6 +265,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">log_params</span> <span class="o">=</span> <span class="n">log_params</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session_fn</span> <span class="o">=</span> <span class="n">session_fn</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_session_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exc</span> <span class="o">=</span> <span class="n">exc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">local_sessions</span> <span class="k">else</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_local</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span> <span class="k">if</span> <span class="n">local_sessions</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__session</span> <span class="o">=</span> <span class="kc">None</span>
@@ -363,9 +370,20 @@
         <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_for</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="n">relative</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">log</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_log_req</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">relative</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">),</span> <span class="n">log_params</span><span class="p">)</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">raise_errors</span> <span class="ow">or</span> <span class="p">(</span><span class="n">raise_errors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_errors</span><span class="p">):</span>
-            <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+        <span class="n">raise_on_code</span> <span class="o">=</span> <span class="n">raise_errors</span> <span class="ow">or</span> <span class="p">(</span><span class="n">raise_errors</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_errors</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exc</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">exc</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">raise_on_code</span> <span class="ow">and</span> <span class="mi">400</span> <span class="o">&lt;=</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&lt;</span> <span class="mi">600</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">exc</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">raise_on_code</span><span class="p">:</span>
+                <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">resp</span></div>
 
 <div class="viewcode-block" id="RequestsClient.get"><a class="viewcode-back" href="../../requests_client.client.html#requests_client.client.RequestsClient.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>

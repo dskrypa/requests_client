@@ -13,6 +13,7 @@ from itertools import count
 from urllib.parse import urlencode, urlparse
 
 import requests
+from requests import RequestException
 
 from .compat import cached_property
 from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
@@ -56,6 +57,11 @@ class RequestsClient:
     :param bool raise_errors: Whether :meth:`Response.raise_for_status<requests.Response.raise_for_status>` should
       be used to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request
       basis.
+    :param class exc: A custom exception class to raise when an error is encountered.  Its init method must accept two
+      positional arguments: ``cause`` (either a :class:`Response<requests.Response>` or a :class:`RequestException
+      <requests.RequestException>` / a subclass thereof) and ``url`` (string).  When a response has a 4xx/5xx status
+      code and ``raise_errors`` is True, then the exception will be initialized with the response object.  For
+      non-code-based exceptions, the exception will be initialized with the original exception.
     :param dict headers: Headers that should be included in the session.
     :param bool|str verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for
       :func:`requests.request` for more information.
@@ -80,7 +86,7 @@ class RequestsClient:
     path_prefix = UrlPart(format_path_prefix)
 
     def __init__(
-            self, host_or_url, port=None, *, scheme=None, path_prefix=None, raise_errors=True, headers=None,
+            self, host_or_url, port=None, *, scheme=None, path_prefix=None, raise_errors=True, exc=None, headers=None,
             verify=None, user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS, log_lvl=logging.DEBUG, log_params=True,
             rate_limit=0, session_fn=requests.Session, local_sessions=False, **kwargs
     ):
@@ -108,6 +114,7 @@ class RequestsClient:
         self.log_params = log_params
         self._session_fn = session_fn
         self._session_kwargs = kwargs
+        self.exc = exc
         self._lock = None if local_sessions else threading.Lock()
         self._local = threading.local() if local_sessions else None
         self.__session = None
@@ -212,9 +219,20 @@ class RequestsClient:
         url = self.url_for(path, relative=relative)
         if log:
             self._log_req(method, url, path, relative, kwargs.get('params'), log_params)
-        resp = self.session.request(method, url, **kwargs)
-        if raise_errors or (raise_errors is None and self.raise_errors):
-            resp.raise_for_status()
+
+        raise_on_code = raise_errors or (raise_errors is None and self.raise_errors)
+        if self.exc:
+            try:
+                resp = self.session.request(method, url, **kwargs)
+            except RequestException as e:
+                raise self.exc(e, url)
+            else:
+                if raise_on_code and 400 <= resp.status_code < 600:
+                    raise self.exc(resp, url)
+        else:
+            resp = self.session.request(method, url, **kwargs)
+            if raise_on_code:
+                resp.raise_for_status()
         return resp
 
     def get(self, path, **kwargs):
