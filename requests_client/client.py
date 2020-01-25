@@ -76,6 +76,7 @@ class RequestsClient:
       the session, such as adding an auth handler.
     :param bool local_sessions: By default, sessions are shared between threads.  If this is specified, then sessions
       are stored locally in each thread.
+    :param bool nopath: When initialized with a URL, ignore the path portion
     :param kwargs: Keyword arguments to pass to the given ``session_fn`` whenever a new session is initialized.  The
       default constructor does not accept any arguments, so these should only be provided if ``session_fn`` is also
       specified.
@@ -88,14 +89,14 @@ class RequestsClient:
     def __init__(
             self, host_or_url, port=None, *, scheme=None, path_prefix=None, raise_errors=True, exc=None, headers=None,
             verify=None, user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS, log_lvl=logging.DEBUG, log_params=True,
-            rate_limit=0, session_fn=requests.Session, local_sessions=False, **kwargs
+            rate_limit=0, session_fn=requests.Session, local_sessions=False, nopath=False, **kwargs
     ):
         if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
             parsed = urlparse(host_or_url)
             self.host = parsed.hostname
             port = port or parsed.port
             scheme = scheme or parsed.scheme
-            path_prefix = path_prefix or parsed.path
+            path_prefix = path_prefix if nopath else path_prefix or parsed.path
         else:
             self.host = host_or_url
             if self.host and ':' in self.host and port:
