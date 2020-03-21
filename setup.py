@@ -20,7 +20,7 @@ setup(
     description=about['__description__'],
     long_description=long_description,
     url=about['__url__'],
-    project_urls={'Source': 'https://github.com/dskrypa/requests_client'},
+    project_urls={'Source': about['__url__']},
     packages=['requests_client'],
     license=about['__license__'],
     classifiers=[

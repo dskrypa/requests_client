@@ -9,6 +9,7 @@ import logging
 import re
 import threading
 from contextlib import suppress
+from functools import partialmethod
 from itertools import count
 from urllib.parse import urlencode, urlparse
 
@@ -29,6 +30,7 @@ class UrlPart:
 
     def __init__(self, formatter=None):
         self.name = '_{}#{}'.format(type(self).__name__, next(self._counter))
+        # Note: Not using __set_name__ / a metaclass to set it so that the validation is always used
         self.formatter = formatter
 
     def __get__(self, instance, owner):
@@ -236,23 +238,10 @@ class RequestsClient:
                 resp.raise_for_status()
         return resp
 
-    def get(self, path, **kwargs):
-        return self.request('GET', path, **kwargs)
-
-    def put(self, path, **kwargs):
-        return self.request('PUT', path, **kwargs)
-
-    def post(self, path, **kwargs):
-        return self.request('POST', path, **kwargs)
-
-    def delete(self, path, **kwargs):
-        return self.request('DELETE', path, **kwargs)
-
-    def options(self, path, **kwargs):
-        return self.request('OPTIONS', path, **kwargs)
-
-    def head(self, path, **kwargs):
-        return self.request('HEAD', path, **kwargs)
-
-    def patch(self, path, **kwargs):
-        return self.request('PATCH', path, **kwargs)
+    get = partialmethod(request, 'GET')
+    put = partialmethod(request, 'PUT')
+    post = partialmethod(request, 'POST')
+    delete = partialmethod(request, 'DELETE')
+    options = partialmethod(request, 'OPTIONS')
+    head = partialmethod(request, 'HEAD')
+    patch = partialmethod(request, 'PATCH')
