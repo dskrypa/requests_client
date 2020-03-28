@@ -10,7 +10,6 @@ import re
 import threading
 from contextlib import suppress
 from functools import partialmethod
-from itertools import count
 from urllib.parse import urlencode, urlparse
 
 import requests
@@ -26,22 +25,21 @@ log = logging.getLogger(__name__)
 
 class UrlPart:
     """Part of a URL.  Enables cached values that rely on this value to be reset if this value is changed"""
-    _counter = count()
-
     def __init__(self, formatter=None):
-        self.name = '_{}#{}'.format(type(self).__name__, next(self._counter))
-        # Note: Not using __set_name__ / a metaclass to set it so that the validation is always used
         self.formatter = formatter
+
+    def __set_name__(self, owner, name):
+        self.name = name    # Note: when both __get__ and __set__ are defined, descriptor takes precedence over __dict__
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        return getattr(instance, self.name, None)
+        return instance.__dict__.get(self.name)
 
     def __set__(self, instance, value):
         if self.formatter is not None:
             value = self.formatter(value)
-        setattr(instance, self.name, value)
+        instance.__dict__[self.name] = value
         with suppress(KeyError):
             del instance.__dict__['_url_fmt']
 

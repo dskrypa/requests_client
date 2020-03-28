@@ -52,6 +52,16 @@ class RequestsClientTest(unittest.TestCase):
         client.port = 3456
         self.assertEqual(client.url_for(''), 'https://localhost:3456/api/v1/')
 
+    def test_validator_on_multiple_sets(self):
+        expected = 'https://localhost:1234/api/v1/'
+        client = RequestsClient(expected)
+        self.assertEqual(client.url_for(''), expected)
+        client.port = 3456
+        self.assertEqual(client.url_for(''), 'https://localhost:3456/api/v1/')
+        with self.assertRaises(ValueError):
+            client.port = 'test'
+        self.assertEqual(client.url_for(''), 'https://localhost:3456/api/v1/')
+
     def test_explicit_user_agent(self):
         client = RequestsClient('localhost', headers={'User-Agent': 'test'})
         self.assertEqual(client._headers['User-Agent'], 'test')
