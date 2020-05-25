@@ -14,11 +14,27 @@ sys.path.append(Path(__file__).parents[1].as_posix())
 from requests_client.user_agent import (
     generate_user_agent, USER_AGENT_SCRIPT_OS, USER_AGENT_SCRIPT_CONTACT_OS, USER_AGENT_SCRIPT_URL_OS
 )
+from requests_client.client import RequestsClient
 
 log = logging.getLogger(__name__)
 
+HEADERS = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate',
+    'Accept-Language': 'en-US,en;q=0.5',
+    # 'Connection': 'keep-alive',
+    'Dnt': '1',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0'
+}
+
 
 class UserAgentTest(unittest.TestCase):
+    def test_ua_header_preserved(self):
+        # noinspection PyTypeChecker
+        client = RequestsClient(None, headers=HEADERS)
+        self.assertEqual(client._headers['User-Agent'], HEADERS['User-Agent'])
+
     def test_ua_file_version_set(self):
         expected = '{}/{}'.format(Path(__file__).stem, __version__)
         user_agent = generate_user_agent(USER_AGENT_SCRIPT_OS)
