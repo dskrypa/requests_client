@@ -13,6 +13,7 @@ Installation
 ------------
 
 To add requests_client as a dependency, add the following to requirements.txt or ``install_requires`` in ``setup.py``::
+
     requests_client@ git+git://github.com/dskrypa/requests_client
 
 
