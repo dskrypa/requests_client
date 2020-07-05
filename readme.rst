@@ -6,19 +6,17 @@ multiple requests to a given server, without needing to provide the full URL for
 useful for working with RESTful applications with multiple backends, where a common endpoint is requested from each
 backend.
 
+Documentation can be found here: https://dskrypa.github.io/requests_client/
+
+
 Installation
 ------------
 
-If installing on Linux, you should run the following first::
-
-    $ sudo apt-get install python3-dev
-
-
-Regardless of OS, setuptools is required::
-
-    $ pip3 install setuptools
+To add requests_client as a dependency, add the following to requirements.txt or ``install_requires`` in ``setup.py``::
+    requests_client@ git+git://github.com/dskrypa/requests_client
 
 
-All of the other requirements are handled in setup.py, which will be run when you install like this::
+To install it directly, use the following::
 
-    $ pip3 install git+git://github.com/dskrypa/requests_client
+    $ pip install git+git://github.com/dskrypa/requests_client
+
