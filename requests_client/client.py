@@ -15,9 +15,13 @@ from urllib.parse import urlencode, urlparse
 import requests
 from requests import RequestException
 
-from .compat import cached_property
 from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
 from .utils import rate_limited, format_path_prefix
+
+try:
+    from functools import cached_property  # added in 3.8
+except ImportError:
+    from .compat import cached_property
 
 __all__ = ['RequestsClient']
 log = logging.getLogger(__name__)

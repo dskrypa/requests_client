@@ -1,38 +1,39 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>User Agent Module &mdash; Requests Client 2020.01.20 documentation</title>
+  <title>User Agent Module &mdash; Requests Client 2020.07.05-2 documentation</title>
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
 
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Utils Module" href="requests_client.utils.html" />
@@ -52,7 +53,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> Requests Client
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Requests Client
           
 
           
@@ -75,6 +76,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -93,6 +95,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -131,7 +134,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>User Agent Module</li>
     
@@ -160,9 +163,9 @@
 <dd class="field-odd"><p>Doug Skrypa</p>
 </dd>
 </dl>
-<dl class="function">
+<dl class="py function">
 <dt id="requests_client.user_agent.generate_user_agent">
-<code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">generate_user_agent</code><span class="sig-paren">(</span><em class="sig-param">ua_format</em>, <em class="sig-param">downgrade=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/user_agent.html#generate_user_agent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.user_agent.generate_user_agent" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">generate_user_agent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ua_format</span></em>, <em class="sig-param"><span class="n">downgrade</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/user_agent.html#generate_user_agent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.user_agent.generate_user_agent" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -177,37 +180,37 @@
 </dl>
 </dd></dl>
 
-<dl class="data">
+<dl class="py data">
 <dt id="requests_client.user_agent.USER_AGENT_LIBS">
 <code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">USER_AGENT_LIBS</code><em class="property"> = '{py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em><a class="headerlink" href="#requests_client.user_agent.USER_AGENT_LIBS" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="data">
+<dl class="py data">
 <dt id="requests_client.user_agent.USER_AGENT_BASIC">
 <code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">USER_AGENT_BASIC</code><em class="property"> = '{script}/{script_ver} {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em><a class="headerlink" href="#requests_client.user_agent.USER_AGENT_BASIC" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="data">
+<dl class="py data">
 <dt id="requests_client.user_agent.USER_AGENT_SCRIPT_OS">
 <code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">USER_AGENT_SCRIPT_OS</code><em class="property"> = '{script}/{script_ver} ({os_name} {os_rel}; {arch}) {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em><a class="headerlink" href="#requests_client.user_agent.USER_AGENT_SCRIPT_OS" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="data">
+<dl class="py data">
 <dt id="requests_client.user_agent.USER_AGENT_SCRIPT_CONTACT">
 <code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">USER_AGENT_SCRIPT_CONTACT</code><em class="property"> = '{script}/{script_ver} ({url}; {email}) {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em><a class="headerlink" href="#requests_client.user_agent.USER_AGENT_SCRIPT_CONTACT" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="data">
+<dl class="py data">
 <dt id="requests_client.user_agent.USER_AGENT_SCRIPT_URL">
 <code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">USER_AGENT_SCRIPT_URL</code><em class="property"> = '{script}/{script_ver} ({url}) {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em><a class="headerlink" href="#requests_client.user_agent.USER_AGENT_SCRIPT_URL" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="data">
+<dl class="py data">
 <dt id="requests_client.user_agent.USER_AGENT_SCRIPT_URL_OS">
 <code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">USER_AGENT_SCRIPT_URL_OS</code><em class="property"> = '{script}/{script_ver} ({url}; {os_name} {os_rel}; {arch}) {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em><a class="headerlink" href="#requests_client.user_agent.USER_AGENT_SCRIPT_URL_OS" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="data">
+<dl class="py data">
 <dt id="requests_client.user_agent.USER_AGENT_SCRIPT_CONTACT_OS">
 <code class="sig-prename descclassname">requests_client.user_agent.</code><code class="sig-name descname">USER_AGENT_SCRIPT_CONTACT_OS</code><em class="property"> = '{script}/{script_ver} ({url}; {email}; {os_name} {os_rel}; {arch}) {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em><a class="headerlink" href="#requests_client.user_agent.USER_AGENT_SCRIPT_CONTACT_OS" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -234,11 +237,19 @@
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2020, Doug Skrypa
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -249,7 +260,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
@@ -264,7 +274,7 @@
 <script type="text/javascript">
     
     $(document).ready(function(){
-        $(".wy-breadcrumbs-aside").append('<a href="https://github.com/dskrypa/requests_client/blob/master/requests_client/user_agent.py" target="_blank">View on Stash</a>');
+        $(".wy-breadcrumbs-aside").append('<a href="https://github.com/dskrypa/requests_client/blob/master/requests_client/user_agent.py" target="_blank">View on GitHub</a>');
     })
     
 </script>

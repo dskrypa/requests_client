@@ -1,38 +1,39 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Client Module &mdash; Requests Client 2020.01.20 documentation</title>
+  <title>Client Module &mdash; Requests Client 2020.07.05-2 documentation</title>
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script type="text/javascript" src="_static/jquery.js"></script>
-        <script type="text/javascript" src="_static/underscore.js"></script>
-        <script type="text/javascript" src="_static/doctools.js"></script>
-        <script type="text/javascript" src="_static/language_data.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
 
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Compatibility Module" href="requests_client.compat.html" />
@@ -52,7 +53,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> Requests Client
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> Requests Client
           
 
           
@@ -75,6 +76,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -93,6 +95,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -131,7 +134,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Client Module</li>
     
@@ -160,9 +163,9 @@
 <dd class="field-odd"><p>Doug Skrypa</p>
 </dd>
 </dl>
-<dl class="class">
+<dl class="py class">
 <dt id="requests_client.client.RequestsClient">
-<em class="property">class </em><code class="sig-prename descclassname">requests_client.client.</code><code class="sig-name descname">RequestsClient</code><span class="sig-paren">(</span><em class="sig-param">host_or_url</em>, <em class="sig-param">port=None</em>, <em class="sig-param">*</em>, <em class="sig-param">scheme=None</em>, <em class="sig-param">path_prefix=None</em>, <em class="sig-param">raise_errors=True</em>, <em class="sig-param">exc=None</em>, <em class="sig-param">headers=None</em>, <em class="sig-param">verify=None</em>, <em class="sig-param">user_agent_fmt='{script}/{script_ver} ({url}; {email}; {os_name} {os_rel}; {arch}) {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em>, <em class="sig-param">log_lvl=10</em>, <em class="sig-param">log_params=True</em>, <em class="sig-param">rate_limit=0</em>, <em class="sig-param">session_fn=&lt;class 'requests.sessions.Session'&gt;</em>, <em class="sig-param">local_sessions=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">requests_client.client.</code><code class="sig-name descname">RequestsClient</code><span class="sig-paren">(</span><em class="sig-param">host_or_url</em>, <em class="sig-param">port=None</em>, <em class="sig-param">*</em>, <em class="sig-param">scheme=None</em>, <em class="sig-param">path_prefix=None</em>, <em class="sig-param">raise_errors=True</em>, <em class="sig-param">exc=None</em>, <em class="sig-param">headers=None</em>, <em class="sig-param">verify=None</em>, <em class="sig-param">user_agent_fmt='{script}/{script_ver} ({url}; {email}; {os_name} {os_rel}; {arch}) {py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'</em>, <em class="sig-param">log_lvl=10</em>, <em class="sig-param">log_params=True</em>, <em class="sig-param">rate_limit=0</em>, <em class="sig-param">session_fn=&lt;class 'requests.sessions.Session'&gt;</em>, <em class="sig-param">local_sessions=False</em>, <em class="sig-param">nopath=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Facilitates submission of multiple requests for different endpoints to a single server.</p>
 <dl class="field-list simple">
@@ -174,107 +177,108 @@ be derived.</p></li>
 <li><p><strong>scheme</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – The URI scheme to use (http, https, etc.) (default: http)</p></li>
 <li><p><strong>path_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – A URI path prefix to include on all URLs.  If provided, it may be overridden on a
 per-request basis.  A <code class="docutils literal notranslate"><span class="pre">/</span></code> will be added to the beginning and end if it was not included.</p></li>
-<li><p><strong>raise_errors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response.raise_for_status" title="(in Requests v2.22.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Response.raise_for_status</span></code></a> should
+<li><p><strong>raise_errors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response.raise_for_status" title="(in Requests v2.24.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Response.raise_for_status</span></code></a> should
 be used to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request
 basis.</p></li>
 <li><p><strong>exc</strong> (<em>class</em>) – A custom exception class to raise when an error is encountered.  Its init method must accept two
-positional arguments: <code class="docutils literal notranslate"><span class="pre">cause</span></code> (either a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Response</span></code></a> or a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.RequestException" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RequestException</span></code></a> / a subclass thereof) and <code class="docutils literal notranslate"><span class="pre">url</span></code> (string).  When a response has a 4xx/5xx status
+positional arguments: <code class="docutils literal notranslate"><span class="pre">cause</span></code> (either a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Response</span></code></a> or a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.RequestException" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RequestException</span></code></a> / a subclass thereof) and <code class="docutils literal notranslate"><span class="pre">url</span></code> (string).  When a response has a 4xx/5xx status
 code and <code class="docutils literal notranslate"><span class="pre">raise_errors</span></code> is True, then the exception will be initialized with the response object.  For
 non-code-based exceptions, the exception will be initialized with the original exception.</p></li>
 <li><p><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.8)"><em>dict</em></a>) – Headers that should be included in the session.</p></li>
 <li><p><strong>verify</strong> (<em>bool|str</em>) – Allows the <code class="docutils literal notranslate"><span class="pre">verify</span></code> option to be specified at a session level.  See the documentation for
-<a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.request" title="(in Requests v2.22.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">requests.request()</span></code></a> for more information.</p></li>
+<a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.request" title="(in Requests v2.24.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">requests.request()</span></code></a> for more information.</p></li>
 <li><p><strong>user_agent_fmt</strong> (<em>str|None</em>) – A format string to be used to generate the <code class="docutils literal notranslate"><span class="pre">User-Agent</span></code> header.  If a custom value
 already exists in the provided <code class="docutils literal notranslate"><span class="pre">headers</span></code>, then this format is not used.</p></li>
 <li><p><strong>log_lvl</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><em>int</em></a>) – Log level to use when logging messages about the method/url when requests are made</p></li>
 <li><p><strong>log_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Include query params in logged messages when requests are made</p></li>
 <li><p><strong>rate_limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><em>float</em></a>) – Interval in seconds to wait between requests (default: no rate limiting).  If specified,
 then a lock is used to prevent concurrent requests.</p></li>
-<li><p><strong>session_fn</strong> (<em>callable</em>) – A callable that returns a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> object.  Defaults to the
-normal constructor for <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>.  Allows users to perform other initialization tasks for
+<li><p><strong>session_fn</strong> (<em>callable</em>) – A callable that returns a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> object.  Defaults to the
+normal constructor for <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>.  Allows users to perform other initialization tasks for
 the session, such as adding an auth handler.</p></li>
 <li><p><strong>local_sessions</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – By default, sessions are shared between threads.  If this is specified, then sessions
 are stored locally in each thread.</p></li>
+<li><p><strong>nopath</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – When initialized with a URL, ignore the path portion</p></li>
 <li><p><strong>kwargs</strong> – Keyword arguments to pass to the given <code class="docutils literal notranslate"><span class="pre">session_fn</span></code> whenever a new session is initialized.  The
 default constructor does not accept any arguments, so these should only be provided if <code class="docutils literal notranslate"><span class="pre">session_fn</span></code> is also
 specified.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient._init_session">
 <code class="sig-name descname">_init_session</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient._init_session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient._init_session" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient._log_req">
-<code class="sig-name descname">_log_req</code><span class="sig-paren">(</span><em class="sig-param">method</em>, <em class="sig-param">url</em>, <em class="sig-param">path</em>, <em class="sig-param">relative</em>, <em class="sig-param">params</em>, <em class="sig-param">log_params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient._log_req"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient._log_req" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">_log_req</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span></em>, <em class="sig-param"><span class="n">url</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">relative</span></em>, <em class="sig-param"><span class="n">params</span></em>, <em class="sig-param"><span class="n">log_params</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient._log_req"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient._log_req" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="requests_client.client.RequestsClient._url_fmt">
-<code class="sig-name descname">_url_fmt</code><a class="headerlink" href="#requests_client.client.RequestsClient._url_fmt" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">_url_fmt</code><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient._url_fmt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient._url_fmt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.close">
 <code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Close the session, if it exists</p>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.delete">
-<code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.delete" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">delete</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#requests_client.client.RequestsClient.delete" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.get">
-<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.get" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#requests_client.client.RequestsClient.get" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.head">
-<code class="sig-name descname">head</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.head" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">head</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#requests_client.client.RequestsClient.head" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="requests_client.client.RequestsClient.host">
 <code class="sig-name descname">host</code><a class="headerlink" href="#requests_client.client.RequestsClient.host" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.options">
-<code class="sig-name descname">options</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.options" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">options</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#requests_client.client.RequestsClient.options" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.patch">
-<code class="sig-name descname">patch</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.patch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.patch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">patch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#requests_client.client.RequestsClient.patch" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="requests_client.client.RequestsClient.path_prefix">
 <code class="sig-name descname">path_prefix</code><a class="headerlink" href="#requests_client.client.RequestsClient.path_prefix" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="requests_client.client.RequestsClient.port">
 <code class="sig-name descname">port</code><a class="headerlink" href="#requests_client.client.RequestsClient.port" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.post">
-<code class="sig-name descname">post</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.post"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.post" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">post</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#requests_client.client.RequestsClient.post" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.put">
-<code class="sig-name descname">put</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.put"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.put" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">put</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#requests_client.client.RequestsClient.put" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.request">
-<code class="sig-name descname">request</code><span class="sig-paren">(</span><em class="sig-param">method</em>, <em class="sig-param">path</em>, <em class="sig-param">*</em>, <em class="sig-param">relative=True</em>, <em class="sig-param">raise_errors=None</em>, <em class="sig-param">log=True</em>, <em class="sig-param">log_params=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.request" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">request</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raise_errors</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">log</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">log_params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Submit a request to the URL based on the given path, using the given HTTP method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -282,7 +286,7 @@ specified.</p></li>
 <li><p><strong>method</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – HTTP method to use (GET/PUT/POST/etc.)</p></li>
 <li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><em>str</em></a>) – The URL path to retrieve</p></li>
 <li><p><strong>relative</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether the stored <a class="reference internal" href="#requests_client.client.RequestsClient.path_prefix" title="requests_client.client.RequestsClient.path_prefix"><code class="xref py py-attr docutils literal notranslate"><span class="pre">path_prefix</span></code></a> should be used</p></li>
-<li><p><strong>raise_errors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response.raise_for_status" title="(in Requests v2.22.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Response.raise_for_status</span></code></a> should
+<li><p><strong>raise_errors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response.raise_for_status" title="(in Requests v2.24.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Response.raise_for_status</span></code></a> should
 be used to raise an exception if the response has a 4xx/5xx status code.  Overrides the setting stored when
 initializing <a class="reference internal" href="#requests_client.client.RequestsClient" title="requests_client.client.RequestsClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">RequestsClient</span></code></a>, if provided.  Setting this to False does not prevent exceptions caused
 by anything other than 4xx/5xx errors from being raised.</p></li>
@@ -290,42 +294,42 @@ by anything other than 4xx/5xx errors from being raised.</p></li>
 initializing <a class="reference internal" href="#requests_client.client.RequestsClient" title="requests_client.client.RequestsClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">RequestsClient</span></code></a>.</p></li>
 <li><p><strong>log_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.8)"><em>bool</em></a>) – Whether query params should be logged, if <code class="docutils literal notranslate"><span class="pre">log=True</span></code>.  Overrides the setting stored
 when initializing <a class="reference internal" href="#requests_client.client.RequestsClient" title="requests_client.client.RequestsClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">RequestsClient</span></code></a>, if provided.</p></li>
-<li><p><strong>kwargs</strong> – Keyword arguments to pass to <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session.request" title="(in Requests v2.22.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Session.request</span></code></a></p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments to pass to <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session.request" title="(in Requests v2.24.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Session.request</span></code></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Response</span></code></a> to the request</p>
+<dd class="field-even"><p>The <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Response" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Response</span></code></a> to the request</p>
 </dd>
 <dt class="field-odd">Raises</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.RequestException" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RequestException</span></code></a> (or a subclass thereof) if the request failed.  If
-the exception is caused by an HTTP error code, then a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.HTTPError" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">HTTPError</span></code></a> will be raised,
+<dd class="field-odd"><p><a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.RequestException" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RequestException</span></code></a> (or a subclass thereof) if the request failed.  If
+the exception is caused by an HTTP error code, then a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.HTTPError" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">HTTPError</span></code></a> will be raised,
 and the code can be accessed via the exception’s <code class="docutils literal notranslate"><span class="pre">.response.status_code</span></code> attribute. If the exception is due
-to a request or connection timeout, then a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Timeout" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Timeout</span></code></a> (or further subclass thereof)
+to a request or connection timeout, then a <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Timeout" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Timeout</span></code></a> (or further subclass thereof)
 will be raised, and the exception will not have a <code class="docutils literal notranslate"><span class="pre">response</span></code> property.</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="py attribute">
 <dt id="requests_client.client.RequestsClient.scheme">
 <code class="sig-name descname">scheme</code><a class="headerlink" href="#requests_client.client.RequestsClient.scheme" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.session">
-<em class="property">property </em><code class="sig-name descname">session</code><a class="headerlink" href="#requests_client.client.RequestsClient.session" title="Permalink to this definition">¶</a></dt>
+<em class="property">property </em><code class="sig-name descname">session</code><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.session" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initializes a new session using the provided <code class="docutils literal notranslate"><span class="pre">session_fn</span></code>, or returns the already created one if it already
 exists.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>The <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session" title="(in Requests v2.22.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> that will be used for requests</p>
+<dd class="field-odd"><p>The <a class="reference external" href="https://requests.readthedocs.io/en/master/api/#requests.Session" title="(in Requests v2.24.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> that will be used for requests</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="requests_client.client.RequestsClient.url_for">
-<code class="sig-name descname">url_for</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">params=None</em>, <em class="sig-param">relative=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.url_for"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.url_for" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">url_for</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">params</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">relative</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/requests_client/client.html#RequestsClient.url_for"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#requests_client.client.RequestsClient.url_for" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -364,11 +368,19 @@ exists.</p>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2020, Doug Skrypa
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -379,7 +391,6 @@ exists.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
@@ -394,7 +405,7 @@ exists.</p>
 <script type="text/javascript">
     
     $(document).ready(function(){
-        $(".wy-breadcrumbs-aside").append('<a href="https://github.com/dskrypa/requests_client/blob/master/requests_client/client.py" target="_blank">View on Stash</a>');
+        $(".wy-breadcrumbs-aside").append('<a href="https://github.com/dskrypa/requests_client/blob/master/requests_client/client.py" target="_blank">View on GitHub</a>');
     })
     
 </script>

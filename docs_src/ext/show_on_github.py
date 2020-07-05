@@ -4,8 +4,11 @@ Sphinx extension to provide links to source on github.
 :author: Doug Skrypa
 """
 
+import logging
 import warnings
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 URL_FMT = 'https://github.com/{user}/{repo}/blob/{branch}/{path}'
 INDEX_URL_FMT = 'https://github.com/{user}/{repo}'
@@ -35,18 +38,20 @@ def html_page_context(app, pagename, templatename, context, doctree):
         )
     else:
         rst_src_dir = Path(app.builder.srcdir)
-        src_dir = rst_src_dir.parents[1]
+        src_dir = rst_src_dir.parent
         rst_path = Path(doctree.get('source'))
         rel_path = rst_path.relative_to(rst_src_dir).with_suffix('')
         rel_path = rel_path.as_posix().replace('.', '/')
 
+        log.debug('Using src_dir={}'.format(src_dir))
         if not src_dir.joinpath(rel_path).exists():
             rel_path += '.py'
         if not src_dir.joinpath(rel_path).exists():
+            log.warning('Skipping non-existant path: {}'.format(rel_path))
             return
         context['show_on_github_url'] = get_github_url(app, rel_path)
 
-    print('Github URL for {!r} => {}'.format(pagename, context['show_on_github_url']))
+    log.info('Github URL for {!r} => {}'.format(pagename, context['show_on_github_url']))
 
 
 def setup(app):
