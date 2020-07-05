@@ -34,5 +34,6 @@ setup(
     ],
     python_requires='~=3.4',
     install_requires=['requests'],
-    tests_require=['flask']
+    tests_require=['flask'],
+    extras_require={'dev':['pre-commit', 'ipython']},
 )

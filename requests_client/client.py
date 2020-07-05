@@ -182,7 +182,7 @@ class RequestsClient:
             with self._lock:
                 if self.__session is not None:
                     self.__session.close()
-                    atexit.unregister(self.__session.close)
+                    atexit.unregister(self.__session.close)  # TODO: Switch to weakref.finalize
                     self.__session = None
         else:
             self._local.session.close()
@@ -236,6 +236,8 @@ class RequestsClient:
                 resp.raise_for_status()
         return resp
 
+    # TODO: switch to custom descriptor to pick up potential subclass's overridden request implementation (assuming
+    #  partialmethod doesn't already cover this case - need to test)
     get = partialmethod(request, 'GET')
     put = partialmethod(request, 'PUT')
     post = partialmethod(request, 'POST')
