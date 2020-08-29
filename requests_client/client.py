@@ -91,9 +91,9 @@ class RequestsClient:
     path_prefix = UrlPart(format_path_prefix)
 
     def __init__(
-            self, host_or_url, port=None, *, scheme=None, path_prefix=None, raise_errors=True, exc=None, headers=None,
-            verify=None, user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS, log_lvl=logging.DEBUG, log_params=True,
-            rate_limit=0, session_fn=requests.Session, local_sessions=False, nopath=False, **kwargs
+        self, host_or_url, port=None, *, scheme=None, path_prefix=None, raise_errors=True, exc=None, headers=None,
+        verify=None, user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS, log_lvl=logging.DEBUG, log_params=True,
+        rate_limit=0, session_fn=requests.Session, local_sessions=False, nopath=False, **kwargs
     ):
         if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
             parsed = urlparse(host_or_url)
@@ -144,7 +144,7 @@ class RequestsClient:
             url = '{}?{}'.format(url, urlencode(params, True))
         return url
 
-    def _init_session(self):
+    def _init_session(self) -> requests.Session:
         session = self._session_fn(**self._session_kwargs)
         session.headers.update(self._headers)
         if self._verify is not None:
@@ -153,7 +153,7 @@ class RequestsClient:
         return session
 
     @property
-    def session(self):
+    def session(self) -> requests.Session:
         """
         Initializes a new session using the provided ``session_fn``, or returns the already created one if it already
         exists.
@@ -173,7 +173,7 @@ class RequestsClient:
                 return self._local.session
 
     @session.setter
-    def session(self, value):
+    def session(self, value: requests.Session):
         if self._lock:
             with self._lock:
                 self.__session = value
