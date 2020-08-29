@@ -5,6 +5,7 @@ __url__ = 'hxxp://example.org'
 __author_email__ = 'example@fake.org'
 
 import logging
+import platform
 import sys
 import unittest
 from argparse import ArgumentParser
@@ -12,7 +13,12 @@ from pathlib import Path
 
 sys.path.append(Path(__file__).parents[1].as_posix())
 from requests_client.user_agent import (
-    generate_user_agent, USER_AGENT_SCRIPT_OS, USER_AGENT_SCRIPT_CONTACT_OS, USER_AGENT_SCRIPT_URL_OS
+    generate_user_agent,
+    USER_AGENT_SCRIPT_OS,
+    USER_AGENT_SCRIPT_CONTACT_OS,
+    USER_AGENT_SCRIPT_URL_OS,
+    USER_AGENT_FIREFOX,
+    OS_SUMMARIES,
 )
 from requests_client.client import RequestsClient
 
@@ -73,6 +79,11 @@ class UserAgentTest(unittest.TestCase):
         __author_email__ = email
         self.assertEqual(generate_user_agent(USER_AGENT_SCRIPT_CONTACT_OS), med_email)
         self.assertEqual(generate_user_agent(USER_AGENT_SCRIPT_URL_OS), med_email)
+
+    def test_firefox_ua(self):
+        ua = generate_user_agent(USER_AGENT_FIREFOX, firefox_ver=80.0)
+        expected = 'Mozilla/5.0 ({}; rv:80.0) Gecko/20100101 Firefox/80.0'.format(OS_SUMMARIES[platform.system()])
+        self.assertEqual(expected, ua)
 
 
 if __name__ == '__main__':

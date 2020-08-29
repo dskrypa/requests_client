@@ -6,6 +6,7 @@ Utilities for setting the User-Agent header for requests.
 
 import inspect
 import logging
+import os
 import platform
 from pathlib import Path
 
@@ -15,10 +16,14 @@ from .__version__ import __version__
 
 __all__ = [
     'generate_user_agent', 'USER_AGENT_LIBS', 'USER_AGENT_BASIC', 'USER_AGENT_SCRIPT_CONTACT',
-    'USER_AGENT_SCRIPT_CONTACT_OS', 'USER_AGENT_SCRIPT_OS', 'USER_AGENT_SCRIPT_URL', 'USER_AGENT_SCRIPT_URL_OS'
+    'USER_AGENT_SCRIPT_CONTACT_OS', 'USER_AGENT_SCRIPT_OS', 'USER_AGENT_SCRIPT_URL', 'USER_AGENT_SCRIPT_URL_OS',
+    'USER_AGENT_FIREFOX', 'USER_AGENT_CHROME',
 ]
 log = logging.getLogger(__name__)
 
+OS_SUMMARIES = {
+    'Windows': 'Windows NT 10.0; Win64; x64', 'Linux': 'X11; Linux x86_64', 'Darwin': 'Macintosh; Intel Mac OS X 10.15'
+}
 USER_AGENT_LIBS = '{py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'
 USER_AGENT_BASIC = '{script}/{script_ver} ' + USER_AGENT_LIBS
 USER_AGENT_SCRIPT_OS = '{script}/{script_ver} ({os_name} {os_rel}; {arch}) ' + USER_AGENT_LIBS
@@ -26,6 +31,8 @@ USER_AGENT_SCRIPT_CONTACT = '{script}/{script_ver} ({url}; {email}) ' + USER_AGE
 USER_AGENT_SCRIPT_URL = '{script}/{script_ver} ({url}) ' + USER_AGENT_LIBS
 USER_AGENT_SCRIPT_URL_OS = '{script}/{script_ver} ({url}; {os_name} {os_rel}; {arch}) ' + USER_AGENT_LIBS
 USER_AGENT_SCRIPT_CONTACT_OS = '{script}/{script_ver} ({url}; {email}; {os_name} {os_rel}; {arch}) ' + USER_AGENT_LIBS
+USER_AGENT_FIREFOX = 'Mozilla/5.0 ({os_info}; rv:{firefox_ver}) Gecko/20100101 Firefox/{firefox_ver}'
+USER_AGENT_CHROME = 'Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36'
 
 
 def generate_user_agent(ua_format, downgrade=True, **kwargs):
@@ -60,11 +67,14 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
         'email': email,                                 # example@fake.org
         'os_name': platform.system(),                   # Windows
         'os_rel': platform.release(),                   # 10
+        'os_info': OS_SUMMARIES[platform.system()],     # (see above)
         'arch': arch,                                   # x64
         'py_impl': platform.python_implementation(),    # CPython
         'py_ver': platform.python_version(),            # 3.7.4
         'requests_ver': requests.__version__,           # 2.22.0
         'rc_ver': __version__,                          # 2020.01.18
+        'firefox_ver': kwargs.pop('firefox_ver', None) or os.environ.get('FIREFOX_VERSION') or 80.0,
+        'chrome_ver': kwargs.pop('chrome_ver', None) or os.environ.get('CHROME_VERSION') or '85.0.4183.83',
     }
     info.update(kwargs)
     if downgrade:
