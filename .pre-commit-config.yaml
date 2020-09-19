@@ -3,3 +3,13 @@ repos:
     rev: f49a29fcceccf60c612e68de6d715e98369490ec
     hooks:
       - id: incr_version
+  - repo: https://github.com/psf/black
+    rev: HEAD
+    hooks:
+      - id: black
+        types: [python]
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: HEAD
+    hooks:
+      - id: flake8
+        types: [python]

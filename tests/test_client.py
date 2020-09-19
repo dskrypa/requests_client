@@ -117,9 +117,12 @@ class RequestsClientTest(unittest.TestCase):
         results = [(r.levelno, r.message) for r in captured.records]
         self.assertListEqual(results, expected)
 
+    def test_new_session_after_close(self):
+        pass
+
 
 def _id_session(client):
-    time.sleep(0.01)    # Without a sleep, this returns fast enough for the executor to re-use the same thread
+    time.sleep(0.01)  # Without a sleep, this returns fast enough for the executor to re-use the same thread
     return id(client.session), hash(client.session)
 
 

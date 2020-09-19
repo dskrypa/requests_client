@@ -4,11 +4,11 @@ Facilitates submission of multiple requests for different endpoints to a single 
 :author: Doug Skrypa
 """
 
-import atexit
 import logging
 import re
 import threading
 from urllib.parse import urlencode, urlparse
+from weakref import finalize
 
 import requests
 from requests import RequestException
@@ -62,15 +62,31 @@ class RequestsClient:
       default constructor does not accept any arguments, so these should only be provided if ``session_fn`` is also
       specified.
     """
+
     scheme = UrlPart()
     host = UrlPart()
     port = UrlPart(lambda v: int(v) if v is not None else v)
     path_prefix = UrlPart(format_path_prefix)
 
     def __init__(
-        self, host_or_url, port=None, *, scheme=None, path_prefix=None, raise_errors=True, exc=None, headers=None,
-        verify=None, user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS, log_lvl=logging.DEBUG, log_params=True,
-        rate_limit=0, session_fn=requests.Session, local_sessions=False, nopath=False, **kwargs
+        self,
+        host_or_url,
+        port=None,
+        *,
+        scheme=None,
+        path_prefix=None,
+        raise_errors=True,
+        exc=None,
+        headers=None,
+        verify=None,
+        user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS,
+        log_lvl=logging.DEBUG,
+        log_params=True,
+        rate_limit=0,
+        session_fn=requests.Session,
+        local_sessions=False,
+        nopath=False,
+        **kwargs,
     ):
         if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
             parsed = urlparse(host_or_url)
@@ -100,8 +116,12 @@ class RequestsClient:
         self._lock = None if local_sessions else threading.Lock()
         self._local = threading.local() if local_sessions else None
         self.__session = None
+        self.__finalizer = finalize(self, self.__close)
         if rate_limit:
             self.request = rate_limited(rate_limit)(self.request)
+
+    def __repr__(self):
+        return '<{}[{}]>'.format(self.__class__.__name__, self.url_for(''))
 
     @cached_property
     def _url_fmt(self):
@@ -126,7 +146,8 @@ class RequestsClient:
         session.headers.update(self._headers)
         if self._verify is not None:
             session.verify = self._verify
-        atexit.register(session.close)
+        if not self.__finalizer.alive:
+            self.__finalizer = finalize(self, self.__close)
         return session
 
     @property
@@ -156,19 +177,6 @@ class RequestsClient:
                 self.__session = value
         else:
             self._local.session = value
-
-    def close(self):
-        """Close the session, if it exists"""
-        if self._lock:
-            with self._lock:
-                if self.__session is not None:
-                    self.__session.close()
-                    atexit.unregister(self.__session.close)  # TODO: Switch to weakref.finalize
-                    self.__session = None
-        else:
-            self._local.session.close()
-            atexit.unregister(self._local.session.close)
-            del self._local.session
 
     def _log_req(self, method, url, path, relative, params, log_params):
         if params and (log_params or (log_params is None and self.log_params)):
@@ -224,3 +232,27 @@ class RequestsClient:
     options = RequestMethod()
     head = RequestMethod()
     patch = RequestMethod()
+
+    def close(self):
+        if self.__finalizer.detach():
+            self.__close()
+
+    def __del__(self):
+        self.close()
+
+    def __close(self):
+        """Close the session, if it exists"""
+        if self._lock:
+            with self._lock:
+                if self.__session is not None:
+                    self.__session.close()
+                    self.__session = None
+        else:
+            self._local.session.close()
+            del self._local.session
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
