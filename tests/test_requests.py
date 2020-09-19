@@ -42,7 +42,7 @@ class RequestsClientFlaskTest(unittest.TestCase):
         @app.route('/shutdown')
         def shutdown_server():
             request.environ.get('werkzeug.server.shutdown')()
-            return ''   # Prevents: TypeError: The view function did not return a valid response...
+            return ''  # Prevents: TypeError: The view function did not return a valid response...
 
         port = find_free_port()
         app_thread = Thread(target=app.run, args=('localhost', port))

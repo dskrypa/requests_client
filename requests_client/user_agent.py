@@ -15,14 +15,23 @@ import requests
 from .__version__ import __version__
 
 __all__ = [
-    'generate_user_agent', 'USER_AGENT_LIBS', 'USER_AGENT_BASIC', 'USER_AGENT_SCRIPT_CONTACT',
-    'USER_AGENT_SCRIPT_CONTACT_OS', 'USER_AGENT_SCRIPT_OS', 'USER_AGENT_SCRIPT_URL', 'USER_AGENT_SCRIPT_URL_OS',
-    'USER_AGENT_FIREFOX', 'USER_AGENT_CHROME',
+    'generate_user_agent',
+    'USER_AGENT_LIBS',
+    'USER_AGENT_BASIC',
+    'USER_AGENT_SCRIPT_CONTACT',
+    'USER_AGENT_SCRIPT_CONTACT_OS',
+    'USER_AGENT_SCRIPT_OS',
+    'USER_AGENT_SCRIPT_URL',
+    'USER_AGENT_SCRIPT_URL_OS',
+    'USER_AGENT_FIREFOX',
+    'USER_AGENT_CHROME',
 ]
 log = logging.getLogger(__name__)
 
 OS_SUMMARIES = {
-    'Windows': 'Windows NT 10.0; Win64; x64', 'Linux': 'X11; Linux x86_64', 'Darwin': 'Macintosh; Intel Mac OS X 10.15'
+    'Windows': 'Windows NT 10.0; Win64; x64',
+    'Linux': 'X11; Linux x86_64',
+    'Darwin': 'Macintosh; Intel Mac OS X 10.15',
 }
 USER_AGENT_LIBS = '{py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'
 USER_AGENT_BASIC = '{script}/{script_ver} ' + USER_AGENT_LIBS
@@ -60,6 +69,7 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
         url = None
         email = None
 
+    # fmt: off
     info = {
         'script': top_level_name,                       # some_script
         'script_ver': top_level_ver,                    # 1.0
@@ -76,9 +86,10 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
         'firefox_ver': kwargs.pop('firefox_ver', None) or os.environ.get('FIREFOX_VERSION') or 80.0,
         'chrome_ver': kwargs.pop('chrome_ver', None) or os.environ.get('CHROME_VERSION') or '85.0.4183.83',
     }
+    # fmt: on
     info.update(kwargs)
     if downgrade:
-        url = info.get('url')       # If overridden, use that value
+        url = info.get('url')  # If overridden, use that value
         email = info.get('email')
         if (url is None or email is None) and ua_format == USER_AGENT_SCRIPT_CONTACT_OS:
             ua_format = USER_AGENT_SCRIPT_URL_OS

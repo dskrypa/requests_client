@@ -14,6 +14,7 @@ class cached_property:
     retrieve the result, and then that calculated result is used the next time the value is accessed.  Deleting the
     attribute from the instance resets the cached value and will cause it to be re-computed.
     """
+
     def __init__(self, func):
         self.__doc__ = func.__doc__
         self.func = func

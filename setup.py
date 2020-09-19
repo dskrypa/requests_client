@@ -39,11 +39,13 @@ class BuildDocsCmd(Command):
             docs_path.mkdir()
             docs_path.joinpath('.nojekyll').touch()
 
+        # fmt: off
         cmd = [
             'sphinx-build', 'docs_src', 'docs', '-b', 'html', '-d', 'docs/_build', '-j', '8', '-T', '-E',
             '-q',
             # '-vvvv',
         ]
+        # fmt: on
         self.announce('Running: {}'.format(cmd), log.DEBUG)
         try:
             check_call(cmd)
@@ -69,7 +71,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.8',
     ],
     python_requires='~=3.4',
     install_requires=['requests'],

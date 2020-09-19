@@ -17,11 +17,12 @@ log = logging.getLogger(__name__)
 
 class UrlPart:
     """Part of a URL.  Enables cached values that rely on this value to be reset if this value is changed"""
+
     def __init__(self, formatter=None):
         self.formatter = formatter
 
     def __set_name__(self, owner, name):
-        self.name = name    # Note: when both __get__ and __set__ are defined, descriptor takes precedence over __dict__
+        self.name = name  # Note: when both __get__ and __set__ are defined, descriptor takes precedence over __dict__
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -90,7 +91,9 @@ def rate_limited(interval=0, log_lvl=logging.DEBUG):
                     sleep(wait)
                 last_call = monotonic()
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 

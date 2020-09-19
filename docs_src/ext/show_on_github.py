@@ -16,8 +16,10 @@ INDEX_URL_FMT = 'https://github.com/{user}/{repo}'
 
 def get_github_url(app, path):
     return URL_FMT.format(
-        user=app.config.show_on_github_user, repo=app.config.show_on_github_repo,
-        branch=app.config.show_on_github_branch, path=path,
+        user=app.config.show_on_github_user,
+        repo=app.config.show_on_github_repo,
+        branch=app.config.show_on_github_branch,
+        path=path,
     )
 
 
@@ -25,9 +27,7 @@ def html_page_context(app, pagename, templatename, context, doctree):
     context['show_on_github_url'] = None
     if templatename != 'page.html' or not doctree:
         return
-    missing = [
-        key for key in ('user', 'repo', 'branch') if not getattr(app.config, 'show_on_github_{}'.format(key))
-    ]
+    missing = [key for key in ('user', 'repo', 'branch') if not getattr(app.config, 'show_on_github_{}'.format(key))]
     if missing:
         missing = ', '.join('show_on_github_{}'.format(key) for key in missing)
         warnings.warn('show_on_github required conf.py settings missing: {}'.format(missing))
