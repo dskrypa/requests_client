@@ -9,6 +9,7 @@ from argparse import ArgumentParser
 from concurrent import futures
 from contextlib import suppress
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from requests import RequestException
 
@@ -118,7 +119,20 @@ class RequestsClientTest(unittest.TestCase):
         self.assertListEqual(results, expected)
 
     def test_new_session_after_close(self):
-        pass
+        client = RequestsClient('http://localhost:1234/', session_fn=MagicMock)
+        with client:
+            client.get('/')
+            # noinspection PyUnresolvedReferences
+            session_1 = client._RequestsClient__session  # type: MagicMock
+            self.assertTrue(session_1.request.called)
+            self.assertFalse(session_1.close.called)
+        self.assertTrue(session_1.close.called)
+        client.get('/')
+        # noinspection PyUnresolvedReferences
+        session_2 = client._RequestsClient__session  # type: MagicMock
+        self.assertNotEqual(session_1, session_2)
+        self.assertTrue(session_2.request.called)
+        self.assertFalse(session_2.close.called)
 
 
 def _id_session(client):

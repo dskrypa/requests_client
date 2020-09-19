@@ -234,8 +234,13 @@ class RequestsClient:
     patch = RequestMethod()
 
     def close(self):
-        if self.__finalizer.detach():
-            self.__close()
+        try:
+            finalizer = self.__finalizer
+        except AttributeError:
+            pass  # This happens if an exception was raised in __init__
+        else:
+            if finalizer.detach():
+                self.__close()
 
     def __del__(self):
         self.close()
@@ -248,8 +253,11 @@ class RequestsClient:
                     self.__session.close()
                     self.__session = None
         else:
-            self._local.session.close()
-            del self._local.session
+            try:
+                self._local.session.close()
+                del self._local.session
+            except AttributeError:
+                pass  # This may happen if a session wasn't created, or if called outside of the thread that created it
 
     def __enter__(self):
         return self
