@@ -8,15 +8,13 @@ import atexit
 import logging
 import re
 import threading
-from contextlib import suppress
-from functools import partialmethod
 from urllib.parse import urlencode, urlparse
 
 import requests
 from requests import RequestException
 
 from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
-from .utils import rate_limited, format_path_prefix
+from .utils import UrlPart, RequestMethod, rate_limited, format_path_prefix
 
 try:
     from functools import cached_property  # added in 3.8
@@ -25,27 +23,6 @@ except ImportError:
 
 __all__ = ['RequestsClient']
 log = logging.getLogger(__name__)
-
-
-class UrlPart:
-    """Part of a URL.  Enables cached values that rely on this value to be reset if this value is changed"""
-    def __init__(self, formatter=None):
-        self.formatter = formatter
-
-    def __set_name__(self, owner, name):
-        self.name = name    # Note: when both __get__ and __set__ are defined, descriptor takes precedence over __dict__
-
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        return instance.__dict__.get(self.name)
-
-    def __set__(self, instance, value):
-        if self.formatter is not None:
-            value = self.formatter(value)
-        instance.__dict__[self.name] = value
-        with suppress(KeyError):
-            del instance.__dict__['_url_fmt']
 
 
 class RequestsClient:
@@ -240,12 +217,10 @@ class RequestsClient:
                 resp.raise_for_status()
         return resp
 
-    # TODO: switch to custom descriptor to pick up potential subclass's overridden request implementation (assuming
-    #  partialmethod doesn't already cover this case - need to test)
-    get = partialmethod(request, 'GET')
-    put = partialmethod(request, 'PUT')
-    post = partialmethod(request, 'POST')
-    delete = partialmethod(request, 'DELETE')
-    options = partialmethod(request, 'OPTIONS')
-    head = partialmethod(request, 'HEAD')
-    patch = partialmethod(request, 'PATCH')
+    get = RequestMethod()
+    put = RequestMethod()
+    post = RequestMethod()
+    delete = RequestMethod()
+    options = RequestMethod()
+    head = RequestMethod()
+    patch = RequestMethod()

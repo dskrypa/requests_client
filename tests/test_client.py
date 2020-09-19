@@ -130,7 +130,7 @@ def find_free_port():
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Utils Unit Tests')
+    parser = ArgumentParser(description='Requests Client Unit Tests')
     parser.add_argument('--verbose', '-v', action='store_true', help='Increase logging verbosity')
     args = parser.parse_args()
     log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
