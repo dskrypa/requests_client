@@ -7,6 +7,7 @@ Facilitates submission of multiple requests for different endpoints to a single 
 import logging
 import re
 import threading
+from typing import Optional, Union, Callable, MutableMapping, Any, Mapping
 from urllib.parse import urlencode, urlparse
 from weakref import finalize
 
@@ -70,22 +71,22 @@ class RequestsClient:
 
     def __init__(
         self,
-        host_or_url,
-        port=None,
+        host_or_url: str,
+        port: Union[int, str, None] = None,
         *,
-        scheme=None,
-        path_prefix=None,
-        raise_errors=True,
-        exc=None,
-        headers=None,
-        verify=None,
-        user_agent_fmt=USER_AGENT_SCRIPT_CONTACT_OS,
-        log_lvl=logging.DEBUG,
-        log_params=True,
-        rate_limit=0,
-        session_fn=requests.Session,
-        local_sessions=False,
-        nopath=False,
+        scheme: Optional[str] = None,
+        path_prefix: Optional[str] = None,
+        raise_errors: bool = True,
+        exc: Optional[Callable] = None,
+        headers: Optional[MutableMapping[str, Any]] = None,
+        verify: Union[None, str, bool] = None,
+        user_agent_fmt: Optional[str] = USER_AGENT_SCRIPT_CONTACT_OS,
+        log_lvl: int = logging.DEBUG,
+        log_params: bool = True,
+        rate_limit: float = 0,
+        session_fn: Callable = requests.Session,
+        local_sessions: bool = False,
+        nopath: bool = False,
         **kwargs,
     ):
         if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
@@ -124,11 +125,11 @@ class RequestsClient:
         return '<{}[{}]>'.format(self.__class__.__name__, self.url_for(''))
 
     @cached_property
-    def _url_fmt(self):
+    def _url_fmt(self) -> str:
         host_port = '{}:{}'.format(self.host, self.port) if self.port else self.host
         return '{}://{}/{{}}'.format(self.scheme, host_port)
 
-    def url_for(self, path, params=None, relative=True):
+    def url_for(self, path: str, params: Optional[Mapping[str, Any]] = None, relative: bool = True) -> str:
         """
         :param str path: The URL path to retrieve
         :param dict params: Request query parameters
@@ -178,12 +179,24 @@ class RequestsClient:
         else:
             self._local.session = value
 
-    def _log_req(self, method, url, path, relative, params, log_params):
+    def _log_req(
+        self, method: str, url: str, path: str, relative: bool, params: Optional[Mapping[str, Any]], log_params: bool
+    ):
         if params and (log_params or (log_params is None and self.log_params)):
             url = self.url_for(path, params, relative=relative)
         log.log(self.log_lvl, '{} -> {}'.format(method, url))
 
-    def request(self, method, path, *, relative=True, raise_errors=None, log=True, log_params=None, **kwargs):
+    def request(
+        self,
+        method: str,
+        path: str,
+        *,
+        relative: bool = True,
+        raise_errors: Optional[bool] = None,
+        log: bool = True,
+        log_params: Optional[bool] = None,
+        **kwargs,
+    ) -> requests.Response:
         """
         Submit a request to the URL based on the given path, using the given HTTP method.
 
@@ -259,7 +272,7 @@ class RequestsClient:
             except AttributeError:
                 pass  # This may happen if a session wasn't created, or if called outside of the thread that created it
 
-    def __enter__(self):
+    def __enter__(self) -> 'RequestsClient':
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
