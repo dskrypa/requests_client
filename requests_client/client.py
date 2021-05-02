@@ -136,8 +136,11 @@ class RequestsClient:
         :param bool relative: Whether the stored :attr:`.path_prefix` should be used
         :return str: The full URL for the given path
         """
-        path = path[1:] if path.startswith('/') else path
-        url = self._url_fmt.format(self.path_prefix + path if relative else path)
+        if not relative and path.startswith(('http://', 'https://')):
+            url = path
+        else:
+            path = path[1:] if path.startswith('/') else path
+            url = self._url_fmt.format(self.path_prefix + path if relative else path)
         if params:
             url = '{}?{}'.format(url, urlencode(params, True))
         return url
