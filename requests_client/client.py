@@ -7,6 +7,7 @@ Facilitates submission of multiple requests for different endpoints to a single 
 import logging
 import re
 import threading
+from functools import cached_property
 from typing import Optional, Union, Callable, MutableMapping, Any, Mapping
 from urllib.parse import urlencode, urlparse
 from weakref import finalize
@@ -17,13 +18,9 @@ from requests import RequestException
 from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
 from .utils import UrlPart, RequestMethod, rate_limited, format_path_prefix
 
-try:
-    from functools import cached_property  # added in 3.8
-except ImportError:
-    from .compat import cached_property
-
 __all__ = ['RequestsClient']
 log = logging.getLogger(__name__)
+Bool = Union[bool, Any]
 
 
 class RequestsClient:
@@ -74,19 +71,19 @@ class RequestsClient:
         host_or_url: str,
         port: Union[int, str, None] = None,
         *,
-        scheme: Optional[str] = None,
-        path_prefix: Optional[str] = None,
-        raise_errors: bool = True,
-        exc: Optional[Callable] = None,
-        headers: Optional[MutableMapping[str, Any]] = None,
+        scheme: str = None,
+        path_prefix: str = None,
+        raise_errors: Bool = True,
+        exc: Callable = None,
+        headers: MutableMapping[str, Any] = None,
         verify: Union[None, str, bool] = None,
-        user_agent_fmt: Optional[str] = USER_AGENT_SCRIPT_CONTACT_OS,
+        user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
         log_lvl: int = logging.DEBUG,
-        log_params: bool = True,
+        log_params: Bool = True,
         rate_limit: float = 0,
         session_fn: Callable = requests.Session,
-        local_sessions: bool = False,
-        nopath: bool = False,
+        local_sessions: Bool = False,
+        nopath: Bool = False,
         **kwargs,
     ):
         if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
@@ -98,8 +95,7 @@ class RequestsClient:
         else:
             self.host = host_or_url
             if self.host and ':' in self.host and port:
-                fmt = 'Conflicting arguments: port provided twice (host_or_url={!r}, port={!r})'
-                raise ValueError(fmt.format(self.host, port))
+                raise ValueError(f'Conflicting arguments: port provided twice (host_or_url={self.host!r}, {port=})')
 
         self.scheme = scheme or 'http'
         self.port = port
@@ -121,20 +117,20 @@ class RequestsClient:
         if rate_limit:
             self.request = rate_limited(rate_limit)(self.request)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<{}[{}]>'.format(self.__class__.__name__, self.url_for(''))
 
     @cached_property
     def _url_fmt(self) -> str:
-        host_port = '{}:{}'.format(self.host, self.port) if self.port else self.host
-        return '{}://{}/{{}}'.format(self.scheme, host_port)
+        host_port = f'{self.host}:{self.port}' if self.port else self.host
+        return f'{self.scheme}://{host_port}/{{}}'
 
-    def url_for(self, path: str, params: Optional[Mapping[str, Any]] = None, relative: bool = True) -> str:
+    def url_for(self, path: str, params: Mapping[str, Any] = None, relative: Bool = True) -> str:
         """
-        :param str path: The URL path to retrieve
-        :param dict params: Request query parameters
-        :param bool relative: Whether the stored :attr:`.path_prefix` should be used
-        :return str: The full URL for the given path
+        :param path: The URL path to retrieve
+        :param params: Request query parameters
+        :param relative: Whether the stored :attr:`.path_prefix` should be used
+        :return: The full URL for the given path
         """
         if not relative and path.startswith(('http://', 'https://')):
             url = path
@@ -183,36 +179,36 @@ class RequestsClient:
             self._local.session = value
 
     def _log_req(
-        self, method: str, url: str, path: str, relative: bool, params: Optional[Mapping[str, Any]], log_params: bool
+        self, method: str, url: str, path: str, relative: Bool, params: Optional[Mapping[str, Any]], log_params: Bool
     ):
         if params and (log_params or (log_params is None and self.log_params)):
             url = self.url_for(path, params, relative=relative)
-        log.log(self.log_lvl, '{} -> {}'.format(method, url))
+        log.log(self.log_lvl, f'{method} -> {url}')
 
     def request(
         self,
         method: str,
         path: str,
         *,
-        relative: bool = True,
-        raise_errors: Optional[bool] = None,
-        log: bool = True,
-        log_params: Optional[bool] = None,
+        relative: Bool = True,
+        raise_errors: Bool = None,
+        log: Bool = True,  # noqa
+        log_params: Bool = None,
         **kwargs,
     ) -> requests.Response:
         """
         Submit a request to the URL based on the given path, using the given HTTP method.
 
-        :param str method: HTTP method to use (GET/PUT/POST/etc.)
-        :param str path: The URL path to retrieve
-        :param bool relative: Whether the stored :attr:`.path_prefix` should be used
-        :param bool raise_errors: Whether :meth:`Response.raise_for_status<requests.Response.raise_for_status>` should
+        :param method: HTTP method to use (GET/PUT/POST/etc.)
+        :param path: The URL path to retrieve
+        :param relative: Whether the stored :attr:`.path_prefix` should be used
+        :param raise_errors: Whether :meth:`Response.raise_for_status<requests.Response.raise_for_status>` should
           be used to raise an exception if the response has a 4xx/5xx status code.  Overrides the setting stored when
           initializing :class:`RequestsClient`, if provided.  Setting this to False does not prevent exceptions caused
           by anything other than 4xx/5xx errors from being raised.
-        :param bool log: Whether a message should be logged with the method and url.  The log level is set when
+        :param log: Whether a message should be logged with the method and url.  The log level is set when
           initializing :class:`RequestsClient`.
-        :param bool log_params: Whether query params should be logged, if ``log=True``.  Overrides the setting stored
+        :param log_params: Whether query params should be logged, if ``log=True``.  Overrides the setting stored
           when initializing :class:`RequestsClient`, if provided.
         :param kwargs: Keyword arguments to pass to :meth:`Session.request<requests.Session.request>`
         :return: The :class:`Response<requests.Response>` to the request

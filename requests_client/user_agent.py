@@ -9,6 +9,7 @@ import logging
 import os
 import platform
 from pathlib import Path
+from typing import Any
 
 import requests
 
@@ -56,18 +57,21 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
         arch = 'x{}'.format(arch.replace('bit', ''))
 
     try:
-        top_level_frame_info = inspect.stack()[-1]
-        top_level_name = Path(inspect.getsourcefile(top_level_frame_info[0])).stem
-        top_level_globals = top_level_frame_info.frame.f_globals
-        top_level_ver = top_level_globals.get('__version__', '1.0')
-        url = top_level_globals.get('__url__')
-        email = top_level_globals.get('__author_email__')
+        top_level_name, top_level_globals = _get_top_level_info(inspect.stack())
     except Exception as e:
-        log.debug('Error determining top-level script info: {}'.format(e))
+        log.debug(f'Error determining top-level script info: {e}')
         top_level_name = 'RequestsClient'
-        top_level_ver = '1.0'
-        url = None
-        email = None
+        top_level_globals = {}
+
+    top_level_ver = top_level_globals.get('__version__', '1.0')
+    url = top_level_globals.get('__url__')
+    email = top_level_globals.get('__author_email__')
+
+    uname = platform.uname()
+    try:
+        os_summary = OS_SUMMARIES[uname.system]
+    except KeyError:
+        os_summary = f'{uname.system} {uname.release}; {arch}'
 
     # fmt: off
     info = {
@@ -75,16 +79,16 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
         'script_ver': top_level_ver,                    # 1.0
         'url': url,                                     # hxxp://example.org/
         'email': email,                                 # example@fake.org
-        'os_name': platform.system(),                   # Windows
-        'os_rel': platform.release(),                   # 10
-        'os_info': OS_SUMMARIES[platform.system()],     # (see above)
+        'os_name': uname.system,                        # Windows
+        'os_rel': uname.release,                        # 10
+        'os_info': os_summary,                          # (see above)
         'arch': arch,                                   # x64
         'py_impl': platform.python_implementation(),    # CPython
         'py_ver': platform.python_version(),            # 3.7.4
         'requests_ver': requests.__version__,           # 2.22.0
         'rc_ver': __version__,                          # 2020.01.18
-        'firefox_ver': kwargs.pop('firefox_ver', None) or os.environ.get('FIREFOX_VERSION') or 80.0,
-        'chrome_ver': kwargs.pop('chrome_ver', None) or os.environ.get('CHROME_VERSION') or '85.0.4183.83',
+        'firefox_ver': kwargs.pop('firefox_ver', None) or os.environ.get('FIREFOX_VERSION') or 95.0,
+        'chrome_ver': kwargs.pop('chrome_ver', None) or os.environ.get('CHROME_VERSION') or '96.0.4664.110',
     }
     # fmt: on
     info.update(kwargs)
@@ -98,3 +102,19 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
         if url is None and email is None and ua_format == USER_AGENT_SCRIPT_URL_OS:
             ua_format = USER_AGENT_SCRIPT_OS
     return ua_format.format(**info)
+
+
+def _get_top_level_info(stack) -> tuple[str, dict[str, Any]]:
+    top_level_frame_info = stack[-1]
+    top_level_name = Path(inspect.getsourcefile(top_level_frame_info[0])).stem
+    top_level_globals = top_level_frame_info.frame.f_globals
+
+    if top_level_name == 'runpy':  # happens when running `python -m unittest tests/*.py`
+        for frame_info in reversed(stack):
+            frame_path = Path(inspect.getsourcefile(frame_info[0]))
+            if frame_path.name != 'runpy.py' and frame_path.parent.name != 'unittest':
+                top_level_name = frame_path.stem
+                top_level_globals = frame_info.frame.f_globals
+                break
+
+    return top_level_name, top_level_globals

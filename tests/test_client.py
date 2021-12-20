@@ -96,40 +96,40 @@ class RequestsClientTest(unittest.TestCase):
             RequestsClient('localhost:1234', port=3456)
 
     def test_logging(self):
-        port = find_free_port()
+        sock, port = find_free_port()
         expected = [
-            (11, 'GET -> http://localhost:{}/test?a=1'.format(port)),
-            (11, 'GET -> http://localhost:{}/test'.format(port)),
-            (10, 'GET -> http://localhost:{}/test'.format(port)),
+            (11, f'GET -> http://localhost:{port}/test?a=1'),
+            (11, f'GET -> http://localhost:{port}/test'),
+            (10, f'GET -> http://localhost:{port}/test'),
         ]
-        # noinspection PyTypeChecker
-        with self.assertLogs('requests_client.client', level=logging.DEBUG) as captured:
-            client = RequestsClient('localhost', port=port, log_lvl=11)
-            with suppress(RequestException):
-                client.get('test', params={'a': 1}, timeout=0.01)
-            with suppress(RequestException):
-                client.get('test', params={'a': 1}, timeout=0.01, log_params=False)
-            with suppress(RequestException):
-                client.get('test', params={'a': 1}, timeout=0.01, log=False)
-            client = RequestsClient('localhost', port=port, log_params=False)
-            with suppress(RequestException):
-                client.get('test', params={'a': 1}, timeout=0.01)
+        try:
+            with self.assertLogs('requests_client.client', level=logging.DEBUG) as captured:
+                client = RequestsClient('localhost', port=port, log_lvl=11)
+                with suppress(RequestException):
+                    client.get('test', params={'a': 1}, timeout=0.01)
+                with suppress(RequestException):
+                    client.get('test', params={'a': 1}, timeout=0.01, log_params=False)
+                with suppress(RequestException):
+                    client.get('test', params={'a': 1}, timeout=0.01, log=False)
+                client = RequestsClient('localhost', port=port, log_params=False)
+                with suppress(RequestException):
+                    client.get('test', params={'a': 1}, timeout=0.01)
 
-        results = [(r.levelno, r.message) for r in captured.records]
-        self.assertListEqual(results, expected)
+            results = [(r.levelno, r.message) for r in captured.records]
+            self.assertListEqual(results, expected)
+        finally:
+            sock.close()
 
     def test_new_session_after_close(self):
         client = RequestsClient('http://localhost:1234/', session_fn=MagicMock)
         with client:
             client.get('/')
-            # noinspection PyUnresolvedReferences
-            session_1 = client._RequestsClient__session  # type: MagicMock
+            session_1 = client._RequestsClient__session  # type: MagicMock  # noqa
             self.assertTrue(session_1.request.called)
             self.assertFalse(session_1.close.called)
         self.assertTrue(session_1.close.called)
         client.get('/')
-        # noinspection PyUnresolvedReferences
-        session_2 = client._RequestsClient__session  # type: MagicMock
+        session_2 = client._RequestsClient__session  # type: MagicMock  # noqa
         self.assertNotEqual(session_1, session_2)
         self.assertTrue(session_2.request.called)
         self.assertFalse(session_2.close.called)
@@ -143,7 +143,7 @@ def _id_session(client):
 def find_free_port():
     s = socket.socket()
     s.bind(('', 0))
-    return s.getsockname()[1]
+    return s, s.getsockname()[1]
 
 
 if __name__ == '__main__':

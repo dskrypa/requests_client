@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 def find_free_port():
     s = socket.socket()
     s.bind(('', 0))
-    return s.getsockname()[1]
+    return s, s.getsockname()[1]
 
 
 class RequestsClientFlaskTest(unittest.TestCase):
@@ -44,21 +44,24 @@ class RequestsClientFlaskTest(unittest.TestCase):
             request.environ.get('werkzeug.server.shutdown')()
             return ''  # Prevents: TypeError: The view function did not return a valid response...
 
-        port = find_free_port()
-        app_thread = Thread(target=app.run, args=('localhost', port))
-        app_thread.start()
+        sock, port = find_free_port()
+        try:
+            app_thread = Thread(target=app.run, args=('localhost', port))
+            app_thread.start()
 
-        client = RequestsClient('localhost', port)
-        threads = 5
-        with ThreadPoolExecutor(max_workers=threads) as exectuor:
-            _futures = [exectuor.submit(client.get, '/') for _ in range(threads)]
-            for future in as_completed(_futures):
-                resp = future.result()
-                log.debug('Result: {}'.format(resp))
-                self.assertEqual(resp.text, response)
+            client = RequestsClient('localhost', port)
+            threads = 5
+            with ThreadPoolExecutor(max_workers=threads) as exectuor:
+                _futures = [exectuor.submit(client.get, '/') for _ in range(threads)]
+                for future in as_completed(_futures):
+                    resp = future.result()
+                    log.debug('Result: {}'.format(resp))
+                    self.assertEqual(resp.text, response)
 
-        client.get('/shutdown', raise_errors=False)
-        app_thread.join()
+            client.get('/shutdown', raise_errors=False)
+            app_thread.join()
+        finally:
+            sock.close()
 
 
 if __name__ == '__main__':

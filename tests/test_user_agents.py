@@ -44,8 +44,8 @@ class UserAgentTest(unittest.TestCase):
     def test_ua_file_version_set(self):
         expected = '{}/{}'.format(Path(__file__).stem, __version__)
         user_agent = generate_user_agent(USER_AGENT_SCRIPT_OS)
-        log.debug('\nUser-Agent: {}'.format(user_agent))
-        self.assertTrue(user_agent.startswith(expected))
+        log.debug(f'\nUser-Agent: {user_agent}')
+        self.assertTrue(user_agent.startswith(expected), f'{user_agent=} does not start with {expected=}')
 
     def test_ua_file_version_unset(self):
         global __version__
@@ -53,9 +53,9 @@ class UserAgentTest(unittest.TestCase):
         del __version__
         expected = '{}/{}'.format(Path(__file__).stem, '1.0')
         user_agent = generate_user_agent(USER_AGENT_SCRIPT_OS)
-        log.debug('\nUser-Agent: {}'.format(user_agent))
+        log.debug(f'\nUser-Agent: {user_agent}')
         try:
-            self.assertTrue(user_agent.startswith(expected))
+            self.assertTrue(user_agent.startswith(expected), f'{user_agent=} does not start with {expected=}')
         finally:
             __version__ = orig
 

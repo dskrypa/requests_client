@@ -6,13 +6,9 @@ from pathlib import Path
 from setuptools import setup
 
 project_root = Path(__file__).resolve().parent
-
-with project_root.joinpath('readme.rst').open('r', encoding='utf-8') as f:
-    long_description = f.read()
-
+long_description = project_root.joinpath('readme.rst').read_text('utf-8')
 about = {}
-with project_root.joinpath('requests_client', '__version__.py').open('r', encoding='utf-8') as f:
-    exec(f.read(), about)
+exec(project_root.joinpath('requests_client', '__version__.py').read_text('utf-8'), about)
 
 
 class BuildDocsCmd(Command):
@@ -21,7 +17,7 @@ class BuildDocsCmd(Command):
     boolean_options = ['clean']
 
     def initialize_options(self):
-        self.clean = False
+        self.clean = False  # noqa
 
     def finalize_options(self):
         pass
@@ -46,7 +42,7 @@ class BuildDocsCmd(Command):
             # '-vvvv',
         ]
         # fmt: on
-        self.announce('Running: {}'.format(cmd), log.DEBUG)
+        self.announce(f'Running: {cmd}', log.DEBUG)
         try:
             check_call(cmd)
         except CalledProcessError as e:
@@ -67,10 +63,11 @@ setup(
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
-    python_requires='~=3.7',
+    python_requires='~=3.8',
     install_requires=['requests'],
     tests_require=['flask'],
     extras_require={'dev': ['pre-commit', 'ipython', 'sphinx', 'sphinx_rtd_theme', 'flask']},
