@@ -3,7 +3,25 @@
 """
 
 from .__version__ import *  # noqa
-from .client import RequestsClient
+
+try:
+    from .client import RequestsClient
+except ImportError:
+
+    class RequestsClient:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError('Missing required dependency: requests')
+
+
+try:
+    from .async_client import AsyncRequestsClient
+except ImportError:
+
+    class AsyncRequestsClient:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError('Missing required dependency: httpx')
+
+
 from .user_agent import (
     generate_user_agent,
     USER_AGENT_LIBS,

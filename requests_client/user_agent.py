@@ -11,7 +11,14 @@ import platform
 from pathlib import Path
 from typing import Any
 
-import requests
+try:
+    from httpx import __version__ as httpx_ver
+except ImportError:
+    httpx_ver = None
+try:
+    from requests import __version__ as req_ver
+except ImportError:
+    req_ver = None
 
 from .__version__ import __version__
 
@@ -34,7 +41,7 @@ OS_SUMMARIES = {
     'Linux': 'X11; Linux x86_64',
     'Darwin': 'Macintosh; Intel Mac OS X 10.15',
 }
-USER_AGENT_LIBS = '{py_impl}/{py_ver} Requests/{requests_ver} RequestsClient/{rc_ver}'
+USER_AGENT_LIBS = '{py_impl}/{py_ver} {lib_name}/{lib_ver} RequestsClient/{rc_ver}'
 USER_AGENT_BASIC = '{script}/{script_ver} ' + USER_AGENT_LIBS
 USER_AGENT_SCRIPT_OS = '{script}/{script_ver} ({os_name} {os_rel}; {arch}) ' + USER_AGENT_LIBS
 USER_AGENT_SCRIPT_CONTACT = '{script}/{script_ver} ({url}; {email}) ' + USER_AGENT_LIBS
@@ -45,12 +52,13 @@ USER_AGENT_FIREFOX = 'Mozilla/5.0 ({os_info}; rv:{firefox_ver}) Gecko/20100101 F
 USER_AGENT_CHROME = 'Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36'
 
 
-def generate_user_agent(ua_format, downgrade=True, **kwargs):
+def generate_user_agent(ua_format: str, downgrade: bool = True, httpx: bool = False, **kwargs) -> str:
     """
-    :param str ua_format: User agent format string
-    :param bool downgrade: Allow a format downgrade if a given value is missing and a default template is used
+    :param ua_format: User agent format string
+    :param downgrade: Allow a format downgrade if a given value is missing and a default template is used
+    :param httpx: Set to True if using httpx instead of Requests
     :param kwargs: Value overrides or custom keys/values to use
-    :return str: The user agent string based on the given format and available system information
+    :return: The user agent string based on the given format and available system information
     """
     arch = platform.architecture()[0]
     if arch.endswith('bit'):
@@ -61,7 +69,7 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
     except Exception as e:
         log.debug(f'Error determining top-level script info: {e}')
         top_level_name = 'RequestsClient'
-        top_level_globals = {}
+        top_level_globals = {'__version__': __version__}
 
     top_level_ver = top_level_globals.get('__version__', '1.0')
     url = top_level_globals.get('__url__')
@@ -85,7 +93,8 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
         'arch': arch,                                   # x64
         'py_impl': platform.python_implementation(),    # CPython
         'py_ver': platform.python_version(),            # 3.7.4
-        'requests_ver': requests.__version__,           # 2.22.0
+        'lib_name': 'httpx' if httpx else 'Requests',   # Requests
+        'lib_ver': httpx_ver if httpx else req_ver,     # 2.22.0
         'rc_ver': __version__,                          # 2020.01.18
         'firefox_ver': kwargs.pop('firefox_ver', None) or os.environ.get('FIREFOX_VERSION') or 95.0,
         'chrome_ver': kwargs.pop('chrome_ver', None) or os.environ.get('CHROME_VERSION') or '96.0.4664.110',
@@ -104,14 +113,14 @@ def generate_user_agent(ua_format, downgrade=True, **kwargs):
     return ua_format.format(**info)
 
 
-def _get_top_level_info(stack) -> tuple[str, dict[str, Any]]:
+def _get_top_level_info(stack: list[inspect.FrameInfo]) -> tuple[str, dict[str, Any]]:
     top_level_frame_info = stack[-1]
     top_level_name = Path(inspect.getsourcefile(top_level_frame_info[0])).stem
     top_level_globals = top_level_frame_info.frame.f_globals
 
     if top_level_name == 'runpy':  # happens when running `python -m unittest tests/*.py`
         for frame_info in reversed(stack):
-            frame_path = Path(inspect.getsourcefile(frame_info[0]))
+            frame_path = Path(inspect.getsourcefile(frame_info[0]))  # Will raise TypeError in interactive sessions
             if frame_path.name != 'runpy.py' and frame_path.parent.name != 'unittest':
                 top_level_name = frame_path.stem
                 top_level_globals = frame_info.frame.f_globals

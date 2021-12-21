@@ -5,23 +5,22 @@ Facilitates submission of multiple requests for different endpoints to a single 
 """
 
 import logging
-import threading
-from typing import Union, Callable, MutableMapping, Any
+from asyncio import Lock, get_running_loop, sleep, run
+from time import monotonic
+from typing import Union, Callable, MutableMapping, Any, Awaitable
 from weakref import finalize
 
-import requests
-from requests import RequestException
+from httpx import AsyncClient, HTTPError, Response
 
 from .base import BaseClient
 from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
-from .utils import rate_limited
 
-__all__ = ['RequestsClient']
-log = logging.getLogger(__name__)
+__all__ = ['AsyncRequestsClient']
+log = _log = logging.getLogger(__name__)
 Bool = Union[bool, Any]
 
 
-class RequestsClient(BaseClient):
+class AsyncRequestsClient(BaseClient):
     """
     Facilitates submission of multiple requests for different endpoints to a single server.
 
@@ -31,26 +30,26 @@ class RequestsClient(BaseClient):
     :param str scheme: The URI scheme to use (http, https, etc.) (default: http)
     :param str path_prefix: A URI path prefix to include on all URLs.  If provided, it may be overridden on a
       per-request basis.  A ``/`` will be added to the beginning and end if it was not included.
-    :param bool raise_errors: Whether :meth:`Response.raise_for_status<requests.Response.raise_for_status>` should
+    :param bool raise_errors: Whether :meth:`Response.raise_for_status<httpx.Response.raise_for_status>` should
       be used to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request
       basis.
     :param class exc: A custom exception class to raise when an error is encountered.  Its init method must accept two
-      positional arguments: ``cause`` (either a :class:`Response<requests.Response>` or a :class:`RequestException
-      <requests.RequestException>` / a subclass thereof) and ``url`` (string).  When a response has a 4xx/5xx status
+      positional arguments: ``cause`` (either a :class:`Response<httpx.Response>` or a :class:`RequestException
+      <httpx.HTTPError>` / a subclass thereof) and ``url`` (string).  When a response has a 4xx/5xx status
       code and ``raise_errors`` is True, then the exception will be initialized with the response object.  For
       non-code-based exceptions, the exception will be initialized with the original exception.
     :param dict headers: Headers that should be included in the session.
     :param bool|str verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for
-      :func:`requests.request` for more information.
+      :func:`httpx.request` for more information.
     :param str|None user_agent_fmt: A format string to be used to generate the ``User-Agent`` header.  If a custom value
       already exists in the provided ``headers``, then this format is not used.
     :param int log_lvl: Log level to use when logging messages about the method/url when requests are made
     :param bool log_params: Include query params in logged messages when requests are made
     :param float rate_limit: Interval in seconds to wait between requests (default: no rate limiting).  If specified,
       then a lock is used to prevent concurrent requests.
-    :param callable session_fn: A callable that returns a :class:`Session<requests.Session>` object.  Defaults to the
-      normal constructor for :class:`Session<requests.Session>`.  Allows users to perform other initialization tasks for
-      the session, such as adding an auth handler.
+    :param callable session_fn: A callable that returns a :class:`AsyncClient<httpx.AsyncClient>` object.  Defaults to
+      the normal constructor for :class:`AsyncClient<httpx.AsyncClient>`.  Allows users to perform other initialization
+      tasks for the session, such as adding an auth handler.
     :param bool local_sessions: By default, sessions are shared between threads.  If this is specified, then sessions
       are stored locally in each thread.
     :param bool nopath: When initialized with a URL, ignore the path portion
@@ -74,8 +73,7 @@ class RequestsClient(BaseClient):
         log_lvl: int = logging.DEBUG,
         log_params: Bool = True,
         rate_limit: float = 0,
-        session_fn: Callable = requests.Session,
-        local_sessions: Bool = False,
+        session_fn: Callable = AsyncClient,
         nopath: Bool = False,
         **kwargs,
     ):
@@ -94,16 +92,15 @@ class RequestsClient(BaseClient):
             **kwargs,
         )
         if user_agent_fmt:
-            self._headers.setdefault('User-Agent', generate_user_agent(user_agent_fmt))
+            self._headers.setdefault('User-Agent', generate_user_agent(user_agent_fmt, httpx=True))
         self._session_fn = session_fn
-        self._lock = None if local_sessions else threading.Lock()
-        self._local = threading.local() if local_sessions else None
-        self.__session = None
+        self._lock = Lock()
+        self.__session = None  # type: AsyncClient | None
         self.__finalizer = finalize(self, self.__close)
-        if rate_limit:
-            self.request = rate_limited(rate_limit)(self.request)
+        self._rate_limit = rate_limit
+        self._last_req = 0
 
-    def _init_session(self) -> requests.Session:
+    async def _init_session(self) -> AsyncClient:
         session = self._session_fn(**self._session_kwargs)
         session.headers.update(self._headers)
         if self._verify is not None:
@@ -112,35 +109,35 @@ class RequestsClient(BaseClient):
             self.__finalizer = finalize(self, self.__close)
         return session
 
-    @property
-    def session(self) -> requests.Session:
+    async def get_session(self) -> AsyncClient:
         """
         Initializes a new session using the provided ``session_fn``, or returns the already created one if it already
         exists.
 
-        :return: The :class:`Session<requests.Session>` that will be used for requests
+        :return: The :class:`AsyncClient<httpx.AsyncClient>` that will be used for requests
         """
-        if self._lock:
-            with self._lock:
-                if self.__session is None:
-                    self.__session = self._init_session()
-                return self.__session
-        else:
-            try:
-                return self._local.session
-            except AttributeError:
-                self._local.session = self._init_session()
-                return self._local.session
+        async with self._lock:
+            if self.__session is None:
+                self.__session = await self._init_session()
+            return self.__session
 
-    @session.setter
-    def session(self, value: requests.Session):
-        if self._lock:
-            with self._lock:
-                self.__session = value
-        else:
-            self._local.session = value
+    async def set_session(self, value: AsyncClient, close: bool = True):
+        async with self._lock:
+            if close and self.__session is not None:
+                await self.__session.aclose()
+            self.__session = value
 
-    def request(
+    @property
+    def session(self) -> Awaitable[AsyncClient]:
+        """
+        Initializes a new session using the provided ``session_fn``, or returns the already created one if it already
+        exists.
+
+        :return: The :class:`AsyncClient<httpx.AsyncClient>` that will be used for requests
+        """
+        return self.get_session()
+
+    async def request(
         self,
         method: str,
         path: str,
@@ -150,14 +147,14 @@ class RequestsClient(BaseClient):
         log: Bool = True,  # noqa
         log_params: Bool = None,
         **kwargs,
-    ) -> requests.Response:
+    ) -> Response:
         """
         Submit a request to the URL based on the given path, using the given HTTP method.
 
         :param method: HTTP method to use (GET/PUT/POST/etc.)
         :param path: The URL path to retrieve
         :param relative: Whether the stored :attr:`.path_prefix` should be used
-        :param raise_errors: Whether :meth:`Response.raise_for_status<requests.Response.raise_for_status>` should
+        :param raise_errors: Whether :meth:`Response.raise_for_status<httpx.Response.raise_for_status>` should
           be used to raise an exception if the response has a 4xx/5xx status code.  Overrides the setting stored when
           initializing :class:`RequestsClient`, if provided.  Setting this to False does not prevent exceptions caused
           by anything other than 4xx/5xx errors from being raised.
@@ -165,31 +162,41 @@ class RequestsClient(BaseClient):
           initializing :class:`RequestsClient`.
         :param log_params: Whether query params should be logged, if ``log=True``.  Overrides the setting stored
           when initializing :class:`RequestsClient`, if provided.
-        :param kwargs: Keyword arguments to pass to :meth:`Session.request<requests.Session.request>`
-        :return: The :class:`Response<requests.Response>` to the request
-        :raises: :class:`RequestException<requests.RequestException>` (or a subclass thereof) if the request failed.  If
-          the exception is caused by an HTTP error code, then a :class:`HTTPError<requests.HTTPError>` will be raised,
+        :param kwargs: Keyword arguments to pass to :meth:`AsyncClient.request<httpx.AsyncClient.request>`
+        :return: The :class:`Response<httpx.Response>` to the request
+        :raises: :class:`HTTPError<httpx.HTTPError>` (or a subclass thereof) if the request failed.  If
+          the exception is caused by an HTTP error code, then a :class:`HTTPError<httpx.HTTPError>` will be raised,
           and the code can be accessed via the exception's ``.response.status_code`` attribute. If the exception is due
-          to a request or connection timeout, then a :class:`Timeout<requests.Timeout>` (or further subclass thereof)
+          to a request or connection timeout, then a :class:`Timeout<httpx.Timeout>` (or further subclass thereof)
           will be raised, and the exception will not have a ``response`` property.
         """
         url = self.url_for(path, relative=relative)
+        if rate_limit := self._rate_limit:
+            elapsed = monotonic() - self._last_req
+            if (wait := rate_limit - elapsed) > 0:
+                if log:
+                    _log.log(self.log_lvl, f'Delaying request {wait:.2f} seconds due to {rate_limit=}')
+                await sleep(wait)
+
         if log:
             self._log_req(method, url, path, relative, kwargs.get('params'), log_params)
 
         raise_on_code = raise_errors or (raise_errors is None and self.raise_errors)
-        if self.exc:
-            try:
-                resp = self.session.request(method, url, **kwargs)
-            except RequestException as e:
-                raise self.exc(e, url)
+        try:
+            if self.exc:
+                try:
+                    resp = await (await self.session).request(method, url, **kwargs)
+                except HTTPError as e:
+                    raise self.exc(e, url)
+                else:
+                    if raise_on_code and 400 <= resp.status_code < 600:
+                        raise self.exc(resp, url)
             else:
-                if raise_on_code and 400 <= resp.status_code < 600:
-                    raise self.exc(resp, url)
-        else:
-            resp = self.session.request(method, url, **kwargs)
-            if raise_on_code:
-                resp.raise_for_status()
+                resp = await (await self.session).request(method, url, **kwargs)
+                if raise_on_code:
+                    resp.raise_for_status()
+        finally:
+            self._last_req = monotonic()
         return resp
 
     def close(self):
@@ -201,25 +208,38 @@ class RequestsClient(BaseClient):
             if finalizer.detach():
                 self.__close()
 
+    async def aclose(self):
+        try:
+            finalizer = self.__finalizer
+        except AttributeError:
+            pass  # This happens if an exception was raised in __init__
+        else:
+            if finalizer.detach():
+                await self.__aclose()
+
     def __del__(self):
-        self.close()
+        try:
+            need_cleanup = self.__session is not None
+        except AttributeError:  # This happens if an exception was raised in __init__
+            need_cleanup = False
+        if need_cleanup:
+            self.close()
 
     def __close(self):
         """Close the session, if it exists"""
-        if self._lock:
-            with self._lock:
-                if self.__session is not None:
-                    self.__session.close()
-                    self.__session = None
-        else:
-            try:
-                self._local.session.close()
-                del self._local.session
-            except AttributeError:
-                pass  # This may happen if a session wasn't created, or if called outside of the thread that created it
+        try:
+            get_running_loop().run_in_executor(None, self.__aclose)
+        except RuntimeError:  # no running loop
+            run(self.__aclose())
 
-    def __enter__(self) -> 'RequestsClient':
+    async def __aclose(self):
+        async with self._lock:
+            if self.__session is not None:
+                await self.__session.aclose()
+                self.__session = None
+
+    async def __aenter__(self) -> 'AsyncRequestsClient':
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.aclose()

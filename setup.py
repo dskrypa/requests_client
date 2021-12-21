@@ -68,8 +68,12 @@ setup(
         'Programming Language :: Python :: 3.10',
     ],
     python_requires='~=3.8',
-    install_requires=['requests'],
+    install_requires=[],
     tests_require=['flask'],
-    extras_require={'dev': ['pre-commit', 'ipython', 'sphinx', 'sphinx_rtd_theme', 'flask']},
+    extras_require={
+        'async': ['httpx'],
+        'sync': ['requests'],
+        'dev': ['pre-commit', 'ipython', 'sphinx', 'sphinx_rtd_theme', 'flask', 'requests', 'httpx'],
+    },
     cmdclass={'docs': BuildDocsCmd},
 )

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import asyncio
 import logging
 import socket
 import sys
@@ -11,10 +12,11 @@ from contextlib import suppress
 from pathlib import Path
 from unittest.mock import MagicMock
 
+from httpx import AsyncClient
 from requests import RequestException
 
 sys.path.append(Path(__file__).parents[1].as_posix())
-from requests_client.client import RequestsClient
+from requests_client import RequestsClient, AsyncRequestsClient
 
 log = logging.getLogger(__name__)
 
@@ -103,7 +105,7 @@ class RequestsClientTest(unittest.TestCase):
             (10, f'GET -> http://localhost:{port}/test'),
         ]
         try:
-            with self.assertLogs('requests_client.client', level=logging.DEBUG) as captured:
+            with self.assertLogs('requests_client.base', level=logging.DEBUG) as captured:
                 client = RequestsClient('localhost', port=port, log_lvl=11)
                 with suppress(RequestException):
                     client.get('test', params={'a': 1}, timeout=0.01)
@@ -133,6 +135,20 @@ class RequestsClientTest(unittest.TestCase):
         self.assertNotEqual(session_1, session_2)
         self.assertTrue(session_2.request.called)
         self.assertFalse(session_2.close.called)
+
+    async def _test_async_session_set(self):
+        client = AsyncRequestsClient('localhost:1234')
+        session_a = await client.session  # noqa
+        self.assertIsInstance(session_a, AsyncClient)
+        with self.assertRaises(AttributeError):
+            client.session = MagicMock()  # noqa
+
+        await client.set_session(AsyncClient())
+        session_b = await client.session  # noqa
+        self.assertNotEqual(session_a, session_b)
+
+    def test_async_session_set(self):
+        asyncio.run(self._test_async_session_set())
 
 
 def _id_session(client):
