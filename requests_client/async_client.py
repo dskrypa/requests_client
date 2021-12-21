@@ -5,7 +5,7 @@ Facilitates submission of multiple requests for different endpoints to a single 
 """
 
 import logging
-from asyncio import Lock, get_running_loop, sleep, run
+from asyncio import Lock, sleep, run, get_event_loop
 from time import monotonic
 from typing import Union, Callable, MutableMapping, Any, Awaitable
 from weakref import finalize
@@ -228,7 +228,7 @@ class AsyncRequestsClient(BaseClient):
     def __close(self):
         """Close the session, if it exists"""
         try:
-            get_running_loop().run_in_executor(None, self.__aclose)
+            get_event_loop().run_in_executor(None, self.__aclose)
         except RuntimeError:  # no running loop
             run(self.__aclose())
 
