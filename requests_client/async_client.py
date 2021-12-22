@@ -5,19 +5,19 @@ Facilitates submission of multiple requests for different endpoints to a single 
 """
 
 import logging
-from asyncio import Lock, sleep, run
+import warnings
+from asyncio import Lock, sleep
 from time import monotonic
 from typing import Union, Callable, MutableMapping, Any, Awaitable
-from weakref import finalize
 
 from httpx import AsyncClient, HTTPError, Response
+from httpx._client import ClientState
 
-from .base import BaseClient
+from .base import BaseClient, Bool
 from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
 
 __all__ = ['AsyncRequestsClient']
 log = _log = logging.getLogger(__name__)
-Bool = Union[bool, Any]
 
 
 class AsyncRequestsClient(BaseClient):
@@ -72,6 +72,7 @@ class AsyncRequestsClient(BaseClient):
         user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
         log_lvl: int = logging.DEBUG,
         log_params: Bool = True,
+        log_data: Bool = False,
         rate_limit: float = 0,
         session_fn: Callable = AsyncClient,
         nopath: Bool = False,
@@ -88,6 +89,7 @@ class AsyncRequestsClient(BaseClient):
             verify=verify,
             log_lvl=log_lvl,
             log_params=log_params,
+            log_data=log_data,
             nopath=nopath,
             **kwargs,
         )
@@ -96,7 +98,6 @@ class AsyncRequestsClient(BaseClient):
         self._session_fn = session_fn
         self._lock = Lock()
         self.__session = None  # type: AsyncClient | None
-        self.__finalizer = finalize(self, self.__close)
         self._rate_limit = rate_limit
         self._last_req = 0
 
@@ -105,8 +106,6 @@ class AsyncRequestsClient(BaseClient):
         session.headers.update(self._headers)
         if self._verify is not None:
             session.verify = self._verify
-        if not self.__finalizer.alive:
-            self.__finalizer = finalize(self, self.__close)
         return session
 
     async def get_session(self) -> AsyncClient:
@@ -146,6 +145,7 @@ class AsyncRequestsClient(BaseClient):
         raise_errors: Bool = None,
         log: Bool = True,  # noqa
         log_params: Bool = None,
+        log_data: Bool = None,
         **kwargs,
     ) -> Response:
         """
@@ -156,12 +156,14 @@ class AsyncRequestsClient(BaseClient):
         :param relative: Whether the stored :attr:`.path_prefix` should be used
         :param raise_errors: Whether :meth:`Response.raise_for_status<httpx.Response.raise_for_status>` should
           be used to raise an exception if the response has a 4xx/5xx status code.  Overrides the setting stored when
-          initializing :class:`RequestsClient`, if provided.  Setting this to False does not prevent exceptions caused
-          by anything other than 4xx/5xx errors from being raised.
+          initializing :class:`AsyncRequestsClient`, if provided.  Setting this to False does not prevent exceptions
+          caused by anything other than 4xx/5xx errors from being raised.
         :param log: Whether a message should be logged with the method and url.  The log level is set when
-          initializing :class:`RequestsClient`.
-        :param log_params: Whether query params should be logged, if ``log=True``.  Overrides the setting stored
-          when initializing :class:`RequestsClient`, if provided.
+          initializing :class:`AsyncRequestsClient`.
+        :param log_params: Whether query params should be logged, if ``log=True``.  Overrides the setting stored when
+          initializing :class:`AsyncRequestsClient`, if provided.
+        :param log_data: Whether POST/PUT data should be logged, if ``log=True``.  Overrides the setting stored when
+          initializing :class:`AsyncRequestsClient`, if provided.
         :param kwargs: Keyword arguments to pass to :meth:`AsyncClient.request<httpx.AsyncClient.request>`
         :return: The :class:`Response<httpx.Response>` to the request
         :raises: :class:`HTTPError<httpx.HTTPError>` (or a subclass thereof) if the request failed.  If
@@ -179,7 +181,7 @@ class AsyncRequestsClient(BaseClient):
                 await sleep(wait)
 
         if log:
-            self._log_req(method, url, path, relative, kwargs.get('params'), log_params)
+            self._log_req(method, url, path, relative, kwargs.get('params'), log_params, log_data, kwargs)
 
         raise_on_code = raise_errors or (raise_errors is None and self.raise_errors)
         try:
@@ -199,41 +201,15 @@ class AsyncRequestsClient(BaseClient):
             self._last_req = monotonic()
         return resp
 
-    def close(self):
-        try:
-            finalizer = self.__finalizer
-        except AttributeError:
-            pass  # This happens if an exception was raised in __init__
-        else:
-            if finalizer.detach():
-                self.__close()
-
     async def aclose(self):
-        try:
-            finalizer = self.__finalizer
-        except AttributeError:
-            pass  # This happens if an exception was raised in __init__
-        else:
-            if finalizer.detach():
-                await self.__aclose()
-
-    def __del__(self):
-        try:
-            need_cleanup = self.__session is not None
-        except AttributeError:  # This happens if an exception was raised in __init__
-            need_cleanup = False
-        if need_cleanup:
-            self.close()
-
-    def __close(self):
-        """Close the session, if it exists"""
-        run(self.__aclose())
-
-    async def __aclose(self):
         async with self._lock:
             if self.__session is not None:
                 await self.__session.aclose()
                 self.__session = None
+
+    def __del__(self):
+        if self.__session is not None and getattr(self.__session, '_state', None) == ClientState.OPENED:
+            warnings.warn(f'Unclosed {self!r} - it is not possible to close synchronously - need to close explicitly')
 
     async def __aenter__(self) -> 'AsyncRequestsClient':
         return self

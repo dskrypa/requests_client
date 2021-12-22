@@ -9,16 +9,14 @@ import threading
 from typing import Union, Callable, MutableMapping, Any
 from weakref import finalize
 
-import requests
-from requests import RequestException
+from requests import RequestException, Session, Response
 
-from .base import BaseClient
+from .base import BaseClient, Bool
 from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
 from .utils import rate_limited
 
 __all__ = ['RequestsClient']
 log = logging.getLogger(__name__)
-Bool = Union[bool, Any]
 
 
 class RequestsClient(BaseClient):
@@ -73,8 +71,9 @@ class RequestsClient(BaseClient):
         user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
         log_lvl: int = logging.DEBUG,
         log_params: Bool = True,
+        log_data: Bool = False,
         rate_limit: float = 0,
-        session_fn: Callable = requests.Session,
+        session_fn: Callable = Session,
         local_sessions: Bool = False,
         nopath: Bool = False,
         **kwargs,
@@ -90,6 +89,7 @@ class RequestsClient(BaseClient):
             verify=verify,
             log_lvl=log_lvl,
             log_params=log_params,
+            log_data=log_data,
             nopath=nopath,
             **kwargs,
         )
@@ -103,7 +103,7 @@ class RequestsClient(BaseClient):
         if rate_limit:
             self.request = rate_limited(rate_limit)(self.request)
 
-    def _init_session(self) -> requests.Session:
+    def _init_session(self) -> Session:
         session = self._session_fn(**self._session_kwargs)
         session.headers.update(self._headers)
         if self._verify is not None:
@@ -113,7 +113,7 @@ class RequestsClient(BaseClient):
         return session
 
     @property
-    def session(self) -> requests.Session:
+    def session(self) -> Session:
         """
         Initializes a new session using the provided ``session_fn``, or returns the already created one if it already
         exists.
@@ -133,7 +133,7 @@ class RequestsClient(BaseClient):
                 return self._local.session
 
     @session.setter
-    def session(self, value: requests.Session):
+    def session(self, value: Session):
         if self._lock:
             with self._lock:
                 self.__session = value
@@ -149,8 +149,9 @@ class RequestsClient(BaseClient):
         raise_errors: Bool = None,
         log: Bool = True,  # noqa
         log_params: Bool = None,
+        log_data: Bool = None,
         **kwargs,
-    ) -> requests.Response:
+    ) -> Response:
         """
         Submit a request to the URL based on the given path, using the given HTTP method.
 
@@ -165,6 +166,8 @@ class RequestsClient(BaseClient):
           initializing :class:`RequestsClient`.
         :param log_params: Whether query params should be logged, if ``log=True``.  Overrides the setting stored
           when initializing :class:`RequestsClient`, if provided.
+        :param log_data: Whether POST/PUT data should be logged, if ``log=True``.  Overrides the setting stored when
+          initializing :class:`RequestsClient`, if provided.
         :param kwargs: Keyword arguments to pass to :meth:`Session.request<requests.Session.request>`
         :return: The :class:`Response<requests.Response>` to the request
         :raises: :class:`RequestException<requests.RequestException>` (or a subclass thereof) if the request failed.  If
@@ -175,7 +178,7 @@ class RequestsClient(BaseClient):
         """
         url = self.url_for(path, relative=relative)
         if log:
-            self._log_req(method, url, path, relative, kwargs.get('params'), log_params)
+            self._log_req(method, url, path, relative, kwargs.get('params'), log_params, log_data, kwargs)
 
         raise_on_code = raise_errors or (raise_errors is None and self.raise_errors)
         if self.exc:

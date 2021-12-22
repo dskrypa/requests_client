@@ -7,7 +7,7 @@ Facilitates submission of multiple requests for different endpoints to a single 
 import logging
 import re
 from functools import cached_property
-from typing import Optional, Union, Callable, MutableMapping, Any, Mapping
+from typing import Union, Callable, MutableMapping, Any, Mapping
 from urllib.parse import urlencode, urlparse
 
 from .utils import UrlPart, RequestMethod, format_path_prefix
@@ -36,6 +36,7 @@ class BaseClient:
         verify: Union[None, str, bool] = None,
         log_lvl: int = logging.DEBUG,
         log_params: Bool = True,
+        log_data: Bool = False,
         nopath: Bool = False,
         **kwargs,
     ):
@@ -58,6 +59,7 @@ class BaseClient:
         self._verify = verify
         self.log_lvl = log_lvl
         self.log_params = log_params
+        self.log_data = log_data
         self._session_kwargs = kwargs
         self.exc = exc
 
@@ -86,11 +88,25 @@ class BaseClient:
         return url
 
     def _log_req(
-        self, method: str, url: str, path: str, relative: Bool, params: Optional[Mapping[str, Any]], log_params: Bool
+        self,
+        method: str,
+        url: str,
+        path: str = '',
+        relative: Bool = True,
+        params: Mapping[str, Any] = None,
+        log_params: Bool = None,
+        log_data: Bool = None,
+        kwargs: Mapping[str, Any] = None,
     ):
         if params and (log_params or (log_params is None and self.log_params)):
             url = self.url_for(path, params, relative=relative)
-        log.log(self.log_lvl, f'{method} -> {url}')
+
+        if (log_data or (log_data is None and self.log_data)) and (data := kwargs.get('data') or kwargs.get('json')):
+            data_repr = f' < {data=}'
+        else:
+            data_repr = ''
+
+        log.log(self.log_lvl, f'{method} -> {url}{data_repr}')
 
     get = RequestMethod()
     put = RequestMethod()

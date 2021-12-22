@@ -77,14 +77,14 @@ class RequestsClientFlaskTest(unittest.TestCase):
 
     async def _test_async_requests(self, port: int):
         expected = 'Test app response'
-        client = AsyncRequestsClient('localhost', port)
-        reqs = 5
-        results = await asyncio.gather(*(client.get('/') for _ in range(reqs)))
-        self.assertEqual(len(results), reqs)
-        for resp in results:
-            log.debug(f'Result: {resp}')
-            self.assertEqual(resp.text, expected)
-        await client.get('/shutdown', raise_errors=False)
+        async with AsyncRequestsClient('localhost', port) as client:
+            reqs = 5
+            results = await asyncio.gather(*(client.get('/') for _ in range(reqs)))
+            self.assertEqual(len(results), reqs)
+            for resp in results:
+                log.debug(f'Result: {resp}')
+                self.assertEqual(resp.text, expected)
+            await client.get('/shutdown', raise_errors=False)
 
     def test_async_requests(self):
         with flask_server() as port:
