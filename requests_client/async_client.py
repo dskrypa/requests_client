@@ -169,8 +169,8 @@ class AsyncRequestsClient(BaseClient):
         :raises: :class:`HTTPError<httpx.HTTPError>` (or a subclass thereof) if the request failed.  If
           the exception is caused by an HTTP error code, then a :class:`HTTPError<httpx.HTTPError>` will be raised,
           and the code can be accessed via the exception's ``.response.status_code`` attribute. If the exception is due
-          to a request or connection timeout, then a :class:`Timeout<httpx.Timeout>` (or further subclass thereof)
-          will be raised, and the exception will not have a ``response`` property.
+          to a request or connection timeout, then a :class:`TimeoutException<httpx.TimeoutException>` (or further
+          subclass thereof) will be raised, and the exception will not have a ``response`` property.
         """
         url = self.url_for(path, relative=relative)
         if rate_limit := self._rate_limit:
