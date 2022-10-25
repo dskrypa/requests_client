@@ -4,6 +4,8 @@ Facilitates submission of multiple requests for different endpoints to a single 
 :author: Doug Skrypa
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 from typing import Union, Callable, MutableMapping, Any
@@ -96,10 +98,14 @@ class RequestsClient(BaseClient):
         if user_agent_fmt:
             self._headers.setdefault('User-Agent', generate_user_agent(user_agent_fmt))
         self._session_fn = session_fn
+        self._init(local_sessions, rate_limit)
+
+    def _init(self, local_sessions: Bool, rate_limit: float):
         self._lock = None if local_sessions else threading.Lock()
         self._local = threading.local() if local_sessions else None
         self.__session = None
         self.__finalizer = finalize(self, self.__close)
+        self._rate_limit = rate_limit
         if rate_limit:
             self.request = rate_limited(rate_limit)(self.request)
 
@@ -221,8 +227,24 @@ class RequestsClient(BaseClient):
             except AttributeError:
                 pass  # This may happen if a session wasn't created, or if called outside of the thread that created it
 
-    def __enter__(self) -> 'RequestsClient':
+    def __enter__(self) -> RequestsClient:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+    def __getstate__(self) -> dict[str, Any]:
+        keys = (
+            'scheme', 'port', 'path_prefix', 'raise_errors', '_headers', '_verify', 'log_lvl', 'log_params', 'log_data',
+            '_session_kwargs', 'exc', '_session_fn', '_rate_limit',
+        )
+        self_dict = self.__dict__
+        state = {key: self_dict[key] for key in keys}
+        state['local_sessions'] = self._lock is None
+        return state
+
+    def __setstate__(self, state: dict[str, Any]):
+        local_sessions = state.pop('local_sessions')
+        rate_limit = state.pop('_rate_limit')
+        self.__dict__.update(state)
+        self._init(local_sessions, rate_limit)
