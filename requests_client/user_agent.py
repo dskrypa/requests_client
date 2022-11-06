@@ -8,6 +8,7 @@ import inspect
 import logging
 import os
 import platform
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +52,8 @@ USER_AGENT_SCRIPT_CONTACT_OS = '{script}/{script_ver} ({url}; {email}; {os_name}
 USER_AGENT_FIREFOX = 'Mozilla/5.0 ({os_info}; rv:{firefox_ver}) Gecko/20100101 Firefox/{firefox_ver}'
 USER_AGENT_CHROME = 'Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36'
 
+_NO_TOP_LEVEL_INFO_LOGGED = False
+
 
 def generate_user_agent(ua_format: str, downgrade: bool = True, httpx: bool = False, **kwargs) -> str:
     """
@@ -67,7 +70,11 @@ def generate_user_agent(ua_format: str, downgrade: bool = True, httpx: bool = Fa
     try:
         top_level_name, top_level_globals = _get_top_level_info(inspect.stack())
     except Exception as e:
-        log.debug(f'Error determining top-level script info: {e}')
+        global _NO_TOP_LEVEL_INFO_LOGGED
+        if not hasattr(sys, 'ps1') and not _NO_TOP_LEVEL_INFO_LOGGED:
+            # sys.ps1 is only present in interactive sessions - see: https://stackoverflow.com/questions/2356399
+            _NO_TOP_LEVEL_INFO_LOGGED = True
+            log.debug(f'Error determining top-level script info: {e}')
         top_level_name = 'RequestsClient'
         top_level_globals = {'__version__': __version__}
 
@@ -96,8 +103,8 @@ def generate_user_agent(ua_format: str, downgrade: bool = True, httpx: bool = Fa
         'lib_name': 'httpx' if httpx else 'Requests',   # Requests
         'lib_ver': httpx_ver if httpx else req_ver,     # 2.22.0
         'rc_ver': __version__,                          # 2020.01.18
-        'firefox_ver': kwargs.pop('firefox_ver', None) or os.environ.get('FIREFOX_VERSION') or 95.0,
-        'chrome_ver': kwargs.pop('chrome_ver', None) or os.environ.get('CHROME_VERSION') or '96.0.4664.110',
+        'firefox_ver': kwargs.pop('firefox_ver', None) or os.environ.get('FIREFOX_VERSION') or 106.0,
+        'chrome_ver': kwargs.pop('chrome_ver', None) or os.environ.get('CHROME_VERSION') or '107.0.5304.88',
     }
     # fmt: on
     info.update(kwargs)

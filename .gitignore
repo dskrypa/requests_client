@@ -3,5 +3,6 @@ venv/
 __pycache__/
 docs/_build/
 docs/.buildinfo
+.coverage
 *.pyc
 *.egg-info
