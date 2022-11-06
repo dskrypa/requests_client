@@ -19,10 +19,12 @@ log = logging.getLogger(__name__)
 class UrlPart:
     """Part of a URL.  Enables cached values that rely on this value to be reset if this value is changed"""
 
+    __slots__ = ('formatter', 'name')
+
     def __init__(self, formatter: Callable = None):
         self.formatter = formatter
 
-    def __set_name__(self, owner, name):
+    def __set_name__(self, owner, name: str):
         self.name = name  # Note: when both __get__ and __set__ are defined, descriptor takes precedence over __dict__
 
     def __get__(self, instance, owner):
@@ -43,6 +45,8 @@ class UrlPart:
 
 class RequestMethod:
     """A request method.  Allows subclasses to override the ``request`` method and have this method call it."""
+
+    __slots__ = ('method',)
 
     def __set_name__(self, owner, name):
         self.method = name.upper()

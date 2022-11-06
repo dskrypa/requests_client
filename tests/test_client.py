@@ -3,25 +3,19 @@
 import asyncio
 import logging
 import socket
-import sys
 import time
-import unittest
-from argparse import ArgumentParser
 from concurrent import futures
 from contextlib import suppress
-from pathlib import Path
+from unittest import TestCase, main
 from unittest.mock import MagicMock
 
 from httpx import AsyncClient
 from requests import RequestException
 
-sys.path.append(Path(__file__).parents[1].as_posix())
 from requests_client import RequestsClient, AsyncRequestsClient
 
-log = logging.getLogger(__name__)
 
-
-class RequestsClientTest(unittest.TestCase):
+class RequestsClientTest(TestCase):
     def test_init_with_base_url(self):
         client = RequestsClient('https://localhost:1234/test')
         self.assertEqual(client.scheme, 'https')
@@ -163,13 +157,7 @@ def find_free_port():
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description='Requests Client Unit Tests')
-    parser.add_argument('--verbose', '-v', action='store_true', help='Increase logging verbosity')
-    args = parser.parse_args()
-    log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
-    log.addHandler(logging.StreamHandler(sys.stdout))
-
     try:
-        unittest.main(warnings='ignore', verbosity=2, exit=False)
+        main(verbosity=2, exit=False)
     except KeyboardInterrupt:
         print()

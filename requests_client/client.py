@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Union, Callable, MutableMapping, Any
+from typing import Union, Optional, Callable, MutableMapping, Any
 from weakref import finalize
 
 from requests import RequestException, Session, Response
@@ -20,40 +20,41 @@ from .utils import rate_limited
 __all__ = ['RequestsClient']
 log = logging.getLogger(__name__)
 
+OptStr = Optional[str]
+
 
 class RequestsClient(BaseClient):
     """
     Facilitates submission of multiple requests for different endpoints to a single server.
 
-    :param str host_or_url: A hostname or host:port, or a URL from which the scheme, host, port, and path_prefix should
+    :param host_or_url: A hostname or host:port, or a URL from which the scheme, host, port, and path_prefix should
       be derived.
-    :param str|int port: A port
-    :param str scheme: The URI scheme to use (http, https, etc.) (default: http)
-    :param str path_prefix: A URI path prefix to include on all URLs.  If provided, it may be overridden on a
+    :param port: A port
+    :param scheme: The URI scheme to use (http, https, etc.) (default: http)
+    :param path_prefix: A URI path prefix to include on all URLs.  If provided, it may be overridden on a
       per-request basis.  A ``/`` will be added to the beginning and end if it was not included.
-    :param bool raise_errors: Whether :meth:`Response.raise_for_status<requests.Response.raise_for_status>` should
-      be used to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request
-      basis.
-    :param class exc: A custom exception class to raise when an error is encountered.  Its init method must accept two
+    :param raise_errors: Whether :meth:`Response.raise_for_status<requests.Response.raise_for_status>` should be used
+      to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request basis.
+    :param exc: A custom exception class to raise when an error is encountered.  Its init method must accept two
       positional arguments: ``cause`` (either a :class:`Response<requests.Response>` or a :class:`RequestException
       <requests.RequestException>` / a subclass thereof) and ``url`` (string).  When a response has a 4xx/5xx status
       code and ``raise_errors`` is True, then the exception will be initialized with the response object.  For
       non-code-based exceptions, the exception will be initialized with the original exception.
-    :param dict headers: Headers that should be included in the session.
-    :param bool|str verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for
+    :param headers: Headers that should be included in the session.
+    :param verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for
       :func:`requests.request` for more information.
-    :param str|None user_agent_fmt: A format string to be used to generate the ``User-Agent`` header.  If a custom value
+    :param user_agent_fmt: A format string to be used to generate the ``User-Agent`` header.  If a custom value
       already exists in the provided ``headers``, then this format is not used.
-    :param int log_lvl: Log level to use when logging messages about the method/url when requests are made
-    :param bool log_params: Include query params in logged messages when requests are made
-    :param float rate_limit: Interval in seconds to wait between requests (default: no rate limiting).  If specified,
+    :param log_lvl: Log level to use when logging messages about the method/url when requests are made
+    :param log_params: Include query params in logged messages when requests are made
+    :param rate_limit: Interval in seconds to wait between requests (default: no rate limiting).  If specified,
       then a lock is used to prevent concurrent requests.
-    :param callable session_fn: A callable that returns a :class:`Session<requests.Session>` object.  Defaults to the
-      normal constructor for :class:`Session<requests.Session>`.  Allows users to perform other initialization tasks for
+    :param session_fn: A callable that returns a :class:`Session<requests.Session>` object.  Defaults to the normal
+      constructor for :class:`Session<requests.Session>`.  Allows users to perform other initialization tasks for
       the session, such as adding an auth handler.
-    :param bool local_sessions: By default, sessions are shared between threads.  If this is specified, then sessions
+    :param local_sessions: By default, sessions are shared between threads.  If this is specified, then sessions
       are stored locally in each thread.
-    :param bool nopath: When initialized with a URL, ignore the path portion
+    :param nopath: When initialized with a URL, ignore the path portion
     :param kwargs: Keyword arguments to pass to the given ``session_fn`` whenever a new session is initialized.  The
       default constructor does not accept any arguments, so these should only be provided if ``session_fn`` is also
       specified.
@@ -64,18 +65,18 @@ class RequestsClient(BaseClient):
         host_or_url: str,
         port: Union[int, str, None] = None,
         *,
-        scheme: str = None,
-        path_prefix: str = None,
+        scheme: OptStr = None,
+        path_prefix: OptStr = None,
         raise_errors: Bool = True,
-        exc: Callable = None,
+        exc: Callable[[Union[RequestException, Response], str], Exception] = None,
         headers: MutableMapping[str, Any] = None,
         verify: Union[None, str, bool] = None,
-        user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
+        user_agent_fmt: OptStr = USER_AGENT_SCRIPT_CONTACT_OS,
         log_lvl: int = logging.DEBUG,
         log_params: Bool = True,
         log_data: Bool = False,
         rate_limit: float = 0,
-        session_fn: Callable = Session,
+        session_fn: Callable[..., Session] = Session,
         local_sessions: Bool = False,
         nopath: Bool = False,
         **kwargs,
@@ -95,8 +96,8 @@ class RequestsClient(BaseClient):
             nopath=nopath,
             **kwargs,
         )
-        if user_agent_fmt:
-            self._headers.setdefault('User-Agent', generate_user_agent(user_agent_fmt))
+        if user_agent_fmt and 'User-Agent' not in self._headers:
+            self._headers['User-Agent'] = generate_user_agent(user_agent_fmt)
         self._session_fn = session_fn
         self._init(local_sessions, rate_limit)
 
@@ -129,7 +130,7 @@ class RequestsClient(BaseClient):
         if self._lock:
             with self._lock:
                 if self.__session is None:
-                    self.__session = self._init_session()
+                    self.__session = self._init_session()  # noqa
                 return self.__session
         else:
             try:
@@ -142,7 +143,7 @@ class RequestsClient(BaseClient):
     def session(self, value: Session):
         if self._lock:
             with self._lock:
-                self.__session = value
+                self.__session = value  # noqa
         else:
             self._local.session = value
 
@@ -234,10 +235,12 @@ class RequestsClient(BaseClient):
         self.close()
 
     def __getstate__(self) -> dict[str, Any]:
+        # fmt: off
         keys = (
             'scheme', 'port', 'path_prefix', 'raise_errors', '_headers', '_verify', 'log_lvl', 'log_params', 'log_data',
             '_session_kwargs', 'exc', '_session_fn', '_rate_limit',
         )
+        # fmt: on
         self_dict = self.__dict__
         state = {key: self_dict[key] for key in keys}
         state['local_sessions'] = self._lock is None
