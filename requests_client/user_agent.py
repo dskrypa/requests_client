@@ -70,11 +70,11 @@ def generate_user_agent(ua_format: str, downgrade: bool = True, httpx: bool = Fa
     try:
         top_level_name, top_level_globals = _get_top_level_info(inspect.stack())
     except Exception as e:
-        global _NO_TOP_LEVEL_INFO_LOGGED
-        if not hasattr(sys, 'ps1') and not _NO_TOP_LEVEL_INFO_LOGGED:
-            # sys.ps1 is only present in interactive sessions - see: https://stackoverflow.com/questions/2356399
-            _NO_TOP_LEVEL_INFO_LOGGED = True
-            log.debug(f'Error determining top-level script info: {e}')
+        if not _in_interactive_session():
+            global _NO_TOP_LEVEL_INFO_LOGGED
+            if not _NO_TOP_LEVEL_INFO_LOGGED:
+                _NO_TOP_LEVEL_INFO_LOGGED = True
+                log.debug(f'Error determining top-level script info: {e}')
         top_level_name = 'RequestsClient'
         top_level_globals = {'__version__': __version__}
 
@@ -118,6 +118,11 @@ def generate_user_agent(ua_format: str, downgrade: bool = True, httpx: bool = Fa
         if url is None and email is None and ua_format == USER_AGENT_SCRIPT_URL_OS:
             ua_format = USER_AGENT_SCRIPT_OS
     return ua_format.format(**info)
+
+
+def _in_interactive_session() -> bool:
+    # sys.ps1 is only present in interactive sessions - see: https://stackoverflow.com/questions/2356399
+    return hasattr(sys, 'ps1')
 
 
 def _get_top_level_info(stack: list[inspect.FrameInfo]) -> tuple[str, dict[str, Any]]:
