@@ -1,15 +1,15 @@
 repos:
   - repo: https://github.com/dskrypa/incr_version
-    rev: c8628c7c9891872493022f4f6fa8ff3b60325371
+    rev: d787bdfe10be33d9219402057571f670a1fae7a7
     hooks:
       - id: incr_version
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 23.7.0
     hooks:
       - id: black
         types: [python]
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
     hooks:
       - id: flake8
         types: [python]
