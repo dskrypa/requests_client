@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Union, Optional, Callable, MutableMapping, Any
+from typing import Union, Optional, Callable, MutableMapping, Any, overload
 from weakref import finalize
 
 from requests import RequestException, Session, Response
@@ -60,6 +60,7 @@ class RequestsClient(BaseClient):
       specified.
     """
 
+    @overload
     def __init__(
         self,
         host_or_url: str,
@@ -81,29 +82,28 @@ class RequestsClient(BaseClient):
         nopath: Bool = False,
         **kwargs,
     ):
-        super().__init__(
-            host_or_url,
-            port,
-            scheme=scheme,
-            path_prefix=path_prefix,
-            raise_errors=raise_errors,
-            exc=exc,
-            headers=headers,
-            verify=verify,
-            log_lvl=log_lvl,
-            log_params=log_params,
-            log_data=log_data,
-            nopath=nopath,
-            **kwargs,
-        )
+        ...
+
+    def __init__(
+        self,
+        host_or_url: str,
+        port: Union[int, str, None] = None,
+        *,
+        user_agent_fmt: OptStr = USER_AGENT_SCRIPT_CONTACT_OS,
+        rate_limit: float = 0,
+        session_fn: Callable[..., Session] = Session,
+        local_sessions: Bool = False,
+        **kwargs,
+    ):
+        super().__init__(host_or_url, port, **kwargs)
         if user_agent_fmt and 'User-Agent' not in self._headers:
             self._headers['User-Agent'] = generate_user_agent(user_agent_fmt)
         self._session_fn = session_fn
         self._init(local_sessions, rate_limit)
 
     def _init(self, local_sessions: Bool, rate_limit: float):
-        self._lock = None if local_sessions else threading.Lock()
-        self._local = threading.local() if local_sessions else None
+        self.__lock = None if local_sessions else threading.Lock()
+        self.__local = threading.local() if local_sessions else None
         self.__session = None
         self.__finalizer = finalize(self, self.__close)
         self._rate_limit = rate_limit
@@ -127,25 +127,25 @@ class RequestsClient(BaseClient):
 
         :return: The :class:`Session<requests.Session>` that will be used for requests
         """
-        if self._lock:
-            with self._lock:
+        if self.__lock:
+            with self.__lock:
                 if self.__session is None:
                     self.__session = self._init_session()  # noqa
                 return self.__session
         else:
             try:
-                return self._local.session
+                return self.__local.session
             except AttributeError:
-                self._local.session = self._init_session()
-                return self._local.session
+                self.__local.session = self._init_session()
+                return self.__local.session
 
     @session.setter
     def session(self, value: Session):
-        if self._lock:
-            with self._lock:
+        if self.__lock:
+            with self.__lock:
                 self.__session = value  # noqa
         else:
-            self._local.session = value
+            self.__local.session = value
 
     def request(
         self,
@@ -216,15 +216,15 @@ class RequestsClient(BaseClient):
 
     def __close(self):
         """Close the session, if it exists"""
-        if self._lock:
-            with self._lock:
+        if self.__lock:
+            with self.__lock:
                 if self.__session is not None:
                     self.__session.close()
                     self.__session = None
         else:
             try:
-                self._local.session.close()
-                del self._local.session
+                self.__local.session.close()
+                del self.__local.session
             except AttributeError:
                 pass  # This may happen if a session wasn't created, or if called outside of the thread that created it
 
@@ -235,15 +235,14 @@ class RequestsClient(BaseClient):
         self.close()
 
     def __getstate__(self) -> dict[str, Any]:
-        # fmt: off
-        keys = (
-            'scheme', 'port', 'path_prefix', 'raise_errors', '_headers', '_verify', 'log_lvl', 'log_params', 'log_data',
-            '_session_kwargs', 'exc', '_session_fn', '_rate_limit',
-        )
-        # fmt: on
-        self_dict = self.__dict__
-        state = {key: self_dict[key] for key in keys}
-        state['local_sessions'] = self._lock is None
+        state = self.__dict__.copy()
+        for attr in ('session', 'lock', 'local', 'finalizer'):
+            del state[f'_RequestsClient__{attr}']
+
+        if self._rate_limit:
+            del state['request']
+
+        state['local_sessions'] = self.__lock is None
         return state
 
     def __setstate__(self, state: dict[str, Any]):

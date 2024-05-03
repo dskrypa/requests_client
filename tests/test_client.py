@@ -2,9 +2,10 @@
 
 import asyncio
 import logging
+import pickle
 import socket
 import time
-from concurrent import futures
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import suppress
 from unittest import TestCase, main
 from unittest.mock import MagicMock
@@ -65,25 +66,25 @@ class RequestsClientTest(TestCase):
 
     def test_threads_get_same_session(self):
         client = RequestsClient('localhost')
-        with futures.ThreadPoolExecutor(max_workers=2) as executor:
-            _futures = [executor.submit(_id_session, client), executor.submit(_id_session, client)]
-            results = set(f.result() for f in futures.as_completed(_futures))
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(_id_session, client), executor.submit(_id_session, client)]
+            results = set(f.result() for f in as_completed(futures))
 
         self.assertEqual(len(results), 1)
 
     def test_threads_get_different_sessions(self):
         client = RequestsClient('localhost', local_sessions=True)
-        with futures.ThreadPoolExecutor(max_workers=2) as executor:
-            _futures = [executor.submit(_id_session, client), executor.submit(_id_session, client)]
-            results = set(f.result() for f in futures.as_completed(_futures))
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(_id_session, client), executor.submit(_id_session, client)]
+            results = set(f.result() for f in as_completed(futures))
 
         self.assertEqual(len(results), 2)
 
     def test_threads_reuse_different_sessions(self):
         client = RequestsClient('localhost', local_sessions=True)
-        with futures.ThreadPoolExecutor(max_workers=2) as executor:
-            _futures = [executor.submit(_id_session, client) for _ in range(4)]
-            results = set(f.result() for f in futures.as_completed(_futures))
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(_id_session, client) for _ in range(4)]
+            results = set(f.result() for f in as_completed(futures))
 
         self.assertEqual(len(results), 2)
 
@@ -143,6 +144,19 @@ class RequestsClientTest(TestCase):
 
     def test_async_session_set(self):
         asyncio.run(self._test_async_session_set())
+
+    def test_pickle_client(self):
+        client = RequestsClient('localhost', path_prefix='/api/v1')
+        clone = pickle.loads(pickle.dumps(client))
+        self.assertIsNot(client, clone)
+        self.assertEqual('http://localhost/api/v1/test', clone.url_for('test'))
+
+    def test_pickle_client_rate_limit(self):
+        self.assertNotIn('request', RequestsClient('localhost').__dict__)
+        client = RequestsClient('localhost', rate_limit=5)
+        self.assertIn('request', client.__dict__)
+        clone = pickle.loads(pickle.dumps(client))
+        self.assertIn('request', clone.__dict__)
 
 
 def _id_session(client):

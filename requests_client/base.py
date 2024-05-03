@@ -6,6 +6,7 @@ Facilitates submission of multiple requests for different endpoints to a single 
 
 import logging
 import re
+from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import Union, Callable, MutableMapping, Any, Mapping
 from urllib.parse import urlencode, urlparse
@@ -17,7 +18,7 @@ log = logging.getLogger(__name__)
 Bool = Union[bool, Any]
 
 
-class BaseClient:
+class BaseClient(ABC):
     scheme = UrlPart()
     host = UrlPart()
     port = UrlPart(lambda v: int(v) if v is not None else v)
@@ -64,7 +65,7 @@ class BaseClient:
         self.exc = exc
 
     def __repr__(self) -> str:
-        return '<{}[{}]>'.format(self.__class__.__name__, self.url_for(''))
+        return f'<{self.__class__.__name__}[{self.url_for("")}]>'
 
     @cached_property
     def _url_fmt(self) -> str:
@@ -84,7 +85,7 @@ class BaseClient:
             path = path[1:] if path.startswith('/') else path
             url = self._url_fmt.format(self.path_prefix + path if relative else path)
         if params:
-            url = '{}?{}'.format(url, urlencode(params, True))
+            url = f'{url}?{urlencode(params, True)}'
         return url
 
     def _log_req(
@@ -115,3 +116,18 @@ class BaseClient:
     options = RequestMethod()
     head = RequestMethod()
     patch = RequestMethod()
+
+    @abstractmethod
+    def request(
+        self,
+        method: str,
+        path: str,
+        *,
+        relative: Bool = True,
+        raise_errors: Bool = None,
+        log: Bool = True,  # noqa
+        log_params: Bool = None,
+        log_data: Bool = None,
+        **kwargs,
+    ):
+        raise NotImplementedError

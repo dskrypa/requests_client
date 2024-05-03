@@ -52,8 +52,8 @@ USER_AGENT_SCRIPT_CONTACT_OS = '{script}/{script_ver} ({url}; {email}; {os_name}
 USER_AGENT_FIREFOX = 'Mozilla/5.0 ({os_info}; rv:{firefox_ver}) Gecko/20100101 Firefox/{firefox_ver}'
 USER_AGENT_CHROME = 'Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36'
 
-DEFAULT_VERSION_CHROME = '116.0.0.0'  # While the actual version has minor/rev/etc values, the user agent uses 0s
-DEFAULT_VERSION_FIREFOX = '116.0'
+DEFAULT_VERSION_CHROME = '124.0.0.0'  # While the actual version has minor/rev/etc values, the user agent uses 0s
+DEFAULT_VERSION_FIREFOX = '125.0'  # While the actual version has a micro value, the user agent does not include it
 
 _NO_TOP_LEVEL_INFO_LOGGED = False
 

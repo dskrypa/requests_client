@@ -11,7 +11,6 @@ import unittest
 from argparse import ArgumentParser
 from pathlib import Path
 
-sys.path.append(Path(__file__).parents[1].as_posix())
 from requests_client.user_agent import (
     generate_user_agent,
     USER_AGENT_SCRIPT_OS,
@@ -42,7 +41,7 @@ class UserAgentTest(unittest.TestCase):
         self.assertEqual(client._headers['User-Agent'], HEADERS['User-Agent'])
 
     def test_ua_file_version_set(self):
-        expected = '{}/{}'.format(Path(__file__).stem, __version__)
+        expected = f'{Path(__file__).stem}/{__version__}'
         user_agent = generate_user_agent(USER_AGENT_SCRIPT_OS)
         log.debug(f'\nUser-Agent: {user_agent}')
         self.assertTrue(user_agent.startswith(expected), f'{user_agent=} does not start with {expected=}')
@@ -51,7 +50,7 @@ class UserAgentTest(unittest.TestCase):
         global __version__
         orig = __version__
         del __version__
-        expected = '{}/{}'.format(Path(__file__).stem, '1.0')
+        expected = f'{Path(__file__).stem}/1.0'
         user_agent = generate_user_agent(USER_AGENT_SCRIPT_OS)
         log.debug(f'\nUser-Agent: {user_agent}')
         try:
@@ -82,7 +81,7 @@ class UserAgentTest(unittest.TestCase):
 
     def test_firefox_ua(self):
         ua = generate_user_agent(USER_AGENT_FIREFOX, firefox_ver=80.0)
-        expected = 'Mozilla/5.0 ({}; rv:80.0) Gecko/20100101 Firefox/80.0'.format(OS_SUMMARIES[platform.system()])
+        expected = f'Mozilla/5.0 ({OS_SUMMARIES[platform.system()]}; rv:80.0) Gecko/20100101 Firefox/80.0'
         self.assertEqual(expected, ua)
 
 

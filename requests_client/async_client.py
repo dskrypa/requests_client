@@ -4,11 +4,13 @@ Facilitates submission of multiple requests for different endpoints to a single 
 :author: Doug Skrypa
 """
 
+from __future__ import annotations
+
 import logging
 import warnings
 from asyncio import Lock, sleep
 from time import monotonic
-from typing import Union, Callable, MutableMapping, Any, Awaitable
+from typing import Union, Callable, MutableMapping, Any, Awaitable, overload
 
 from httpx import AsyncClient, HTTPError, Response
 from httpx._client import ClientState
@@ -24,40 +26,41 @@ class AsyncRequestsClient(BaseClient):
     """
     Facilitates submission of multiple requests for different endpoints to a single server.
 
-    :param str host_or_url: A hostname or host:port, or a URL from which the scheme, host, port, and path_prefix should
+    :param host_or_url: A hostname or host:port, or a URL from which the scheme, host, port, and path_prefix should
       be derived.
-    :param str|int port: A port
-    :param str scheme: The URI scheme to use (http, https, etc.) (default: http)
-    :param str path_prefix: A URI path prefix to include on all URLs.  If provided, it may be overridden on a
+    :param port: A port
+    :param scheme: The URI scheme to use (http, https, etc.) (default: http)
+    :param path_prefix: A URI path prefix to include on all URLs.  If provided, it may be overridden on a
       per-request basis.  A ``/`` will be added to the beginning and end if it was not included.
-    :param bool raise_errors: Whether :meth:`Response.raise_for_status<httpx.Response.raise_for_status>` should
+    :param raise_errors: Whether :meth:`Response.raise_for_status<httpx.Response.raise_for_status>` should
       be used to raise an exception if a response has a 4xx/5xx status code.  This may be overridden on a per-request
       basis.
-    :param class exc: A custom exception class to raise when an error is encountered.  Its init method must accept two
+    :param exc: A custom exception class to raise when an error is encountered.  Its init method must accept two
       positional arguments: ``cause`` (either a :class:`Response<httpx.Response>` or a :class:`RequestException
       <httpx.HTTPError>` / a subclass thereof) and ``url`` (string).  When a response has a 4xx/5xx status
       code and ``raise_errors`` is True, then the exception will be initialized with the response object.  For
       non-code-based exceptions, the exception will be initialized with the original exception.
-    :param dict headers: Headers that should be included in the session.
-    :param bool|str verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for
+    :param headers: Headers that should be included in the session.
+    :param verify: Allows the ``verify`` option to be specified at a session level.  See the documentation for
       :func:`httpx.request` for more information.
-    :param str|None user_agent_fmt: A format string to be used to generate the ``User-Agent`` header.  If a custom value
+    :param user_agent_fmt: A format string to be used to generate the ``User-Agent`` header.  If a custom value
       already exists in the provided ``headers``, then this format is not used.
-    :param int log_lvl: Log level to use when logging messages about the method/url when requests are made
-    :param bool log_params: Include query params in logged messages when requests are made
-    :param float rate_limit: Interval in seconds to wait between requests (default: no rate limiting).  If specified,
+    :param log_lvl: Log level to use when logging messages about the method/url when requests are made
+    :param log_params: Include query params in logged messages when requests are made
+    :param rate_limit: Interval in seconds to wait between requests (default: no rate limiting).  If specified,
       then a lock is used to prevent concurrent requests.
-    :param callable session_fn: A callable that returns a :class:`AsyncClient<httpx.AsyncClient>` object.  Defaults to
+    :param session_fn: A callable that returns a :class:`AsyncClient<httpx.AsyncClient>` object.  Defaults to
       the normal constructor for :class:`AsyncClient<httpx.AsyncClient>`.  Allows users to perform other initialization
       tasks for the session, such as adding an auth handler.
-    :param bool local_sessions: By default, sessions are shared between threads.  If this is specified, then sessions
+    :param local_sessions: By default, sessions are shared between threads.  If this is specified, then sessions
       are stored locally in each thread.
-    :param bool nopath: When initialized with a URL, ignore the path portion
+    :param nopath: When initialized with a URL, ignore the path portion
     :param kwargs: Keyword arguments to pass to the given ``session_fn`` whenever a new session is initialized.  The
       default constructor does not accept any arguments, so these should only be provided if ``session_fn`` is also
       specified.
     """
 
+    @overload
     def __init__(
         self,
         host_or_url: str,
@@ -78,25 +81,23 @@ class AsyncRequestsClient(BaseClient):
         nopath: Bool = False,
         **kwargs,
     ):
-        super().__init__(
-            host_or_url,
-            port,
-            scheme=scheme,
-            path_prefix=path_prefix,
-            raise_errors=raise_errors,
-            exc=exc,
-            headers=headers,
-            verify=verify,
-            log_lvl=log_lvl,
-            log_params=log_params,
-            log_data=log_data,
-            nopath=nopath,
-            **kwargs,
-        )
+        ...
+
+    def __init__(
+        self,
+        host_or_url: str,
+        port: Union[int, str, None] = None,
+        *,
+        user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
+        rate_limit: float = 0,
+        session_fn: Callable = AsyncClient,
+        **kwargs,
+    ):
+        super().__init__(host_or_url, port, **kwargs)
         if user_agent_fmt:
             self._headers.setdefault('User-Agent', generate_user_agent(user_agent_fmt, httpx=True))
         self._session_fn = session_fn
-        self._lock = Lock()
+        self.__lock = Lock()
         self.__session = None  # type: AsyncClient | None
         self._rate_limit = rate_limit
         self._last_req = 0
@@ -115,13 +116,13 @@ class AsyncRequestsClient(BaseClient):
 
         :return: The :class:`AsyncClient<httpx.AsyncClient>` that will be used for requests
         """
-        async with self._lock:
+        async with self.__lock:
             if self.__session is None:
                 self.__session = await self._init_session()
             return self.__session
 
     async def set_session(self, value: AsyncClient, close: bool = True):
-        async with self._lock:
+        async with self.__lock:
             if close and self.__session is not None:
                 await self.__session.aclose()
             self.__session = value
@@ -202,7 +203,7 @@ class AsyncRequestsClient(BaseClient):
         return resp
 
     async def aclose(self):
-        async with self._lock:
+        async with self.__lock:
             if self.__session is not None:
                 await self.__session.aclose()
                 self.__session = None
@@ -211,7 +212,7 @@ class AsyncRequestsClient(BaseClient):
         if self.__session is not None and getattr(self.__session, '_state', None) == ClientState.OPENED:
             warnings.warn(f'Unclosed {self!r} - it is not possible to close synchronously - need to close explicitly')
 
-    async def __aenter__(self) -> 'AsyncRequestsClient':
+    async def __aenter__(self) -> AsyncRequestsClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

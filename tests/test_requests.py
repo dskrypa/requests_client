@@ -9,17 +9,14 @@ import asyncio
 import logging
 import os
 import socket
-import sys
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager
-from pathlib import Path
 from threading import Thread
 from typing import ContextManager
 from unittest import TestCase, main, skip
 
 from flask import Flask, request
 
-sys.path.append(Path(__file__).parents[1].as_posix())
 from requests_client.client import RequestsClient
 from requests_client.async_client import AsyncRequestsClient
 
@@ -68,8 +65,8 @@ class RequestsClientFlaskTest(TestCase):
             client = RequestsClient('localhost', port)
             threads = 5
             with ThreadPoolExecutor(max_workers=threads) as exectuor:
-                _futures = [exectuor.submit(client.get, '/') for _ in range(threads)]
-                for future in as_completed(_futures):
+                futures = [exectuor.submit(client.get, '/') for _ in range(threads)]
+                for future in as_completed(futures):
                     resp = future.result()
                     log.debug(f'Result: {resp}')
                     self.assertEqual(resp.text, expected)

@@ -4,10 +4,8 @@ import logging
 import sys
 import unittest
 from argparse import ArgumentParser
-from pathlib import Path
 from unittest.mock import MagicMock
 
-sys.path.append(Path(__file__).parents[1].as_posix())
 from requests_client.client import RequestsClient
 
 log = logging.getLogger(__name__)
