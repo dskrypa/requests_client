@@ -1,15 +1,21 @@
 repos:
   - repo: https://github.com/dskrypa/incr_version
-    rev: d787bdfe10be33d9219402057571f670a1fae7a7
+    rev: 20c64597e6d9cb9e368e2a710fa389b8ffd5517f
     hooks:
       - id: incr_version
-  - repo: https://github.com/psf/black
-    rev: 23.7.0
+  - repo: local
     hooks:
-      - id: black
+      - id: ruff-check
+        name: ruff-check
+        entry: ruff
+        args: ['check', '--fix', '--no-cache']
+        language: system
         types: [python]
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.1.0
-    hooks:
-      - id: flake8
+        stages: [pre-commit]
+      - id: ruff-format
+        name: ruff-format
+        entry: ruff
+        args: ['format', '--no-cache']
+        language: system
         types: [python]
+        stages: [pre-commit]
