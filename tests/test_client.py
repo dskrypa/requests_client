@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 from httpx import AsyncClient
 from requests import RequestException
 
-from requests_client import RequestsClient, AsyncRequestsClient
+from requests_client import AsyncRequestsClient, RequestsClient
 
 
 class RequestsClientTest(TestCase):

@@ -9,7 +9,7 @@ import asyncio
 import logging
 import os
 import socket
-from concurrent.futures import as_completed, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from threading import Thread
 from typing import ContextManager
@@ -17,8 +17,8 @@ from unittest import TestCase, main, skip
 
 from flask import Flask, request
 
-from requests_client.client import RequestsClient
 from requests_client.async_client import AsyncRequestsClient
+from requests_client.client import RequestsClient
 
 log = logging.getLogger(__name__)
 
