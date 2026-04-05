@@ -15,11 +15,11 @@ from typing import Any
 try:
     from httpx import __version__ as httpx_ver
 except ImportError:
-    httpx_ver = None
+    httpx_ver = None  # type: ignore[assignment]
 try:
     from requests import __version__ as req_ver
 except ImportError:
-    req_ver = None
+    req_ver = None  # type: ignore[assignment]
 
 from .__version__ import __version__
 
@@ -52,8 +52,8 @@ USER_AGENT_SCRIPT_CONTACT_OS = '{script}/{script_ver} ({url}; {email}; {os_name}
 USER_AGENT_FIREFOX = 'Mozilla/5.0 ({os_info}; rv:{firefox_ver}) Gecko/20100101 Firefox/{firefox_ver}'
 USER_AGENT_CHROME = 'Mozilla/5.0 ({os_info}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36'
 
-DEFAULT_VERSION_CHROME = '144.0.0.0'  # While the actual version has minor/rev/etc values, the user agent uses 0s
-DEFAULT_VERSION_FIREFOX = '147.0'  # While the actual version has a micro value, the user agent does not include it
+DEFAULT_VERSION_CHROME = '147.0.0.0'  # While the actual version has minor/rev/etc values, the user agent uses 0s
+DEFAULT_VERSION_FIREFOX = '149.0'  # While the actual version has a micro value, the user agent does not include it
 
 _NO_TOP_LEVEL_INFO_LOGGED = False
 
@@ -130,12 +130,13 @@ def _in_interactive_session() -> bool:
 
 def _get_top_level_info(stack: list[inspect.FrameInfo]) -> tuple[str, dict[str, Any]]:
     top_level_frame_info = stack[-1]
-    top_level_name = Path(inspect.getsourcefile(top_level_frame_info[0])).stem
+    top_level_name = Path(inspect.getsourcefile(top_level_frame_info[0])).stem  # type: ignore[arg-type]
     top_level_globals = top_level_frame_info.frame.f_globals
 
     if top_level_name == 'runpy':  # happens when running `python -m unittest tests/*.py`
         for frame_info in reversed(stack):
-            frame_path = Path(inspect.getsourcefile(frame_info[0]))  # Will raise TypeError in interactive sessions
+            # The line below will raise TypeError in interactive sessions
+            frame_path = Path(inspect.getsourcefile(frame_info[0]))  # type: ignore[arg-type]
             if frame_path.name != 'runpy.py' and frame_path.parent.name != 'unittest':
                 top_level_name = frame_path.stem
                 top_level_globals = frame_info.frame.f_globals

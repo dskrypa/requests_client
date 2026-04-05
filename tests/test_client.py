@@ -38,7 +38,7 @@ class RequestsClientTest(TestCase):
         self.assertEqual(client.url_for('api/v2/test', relative=False), expected)
 
     def test_url_relative_path(self):
-        client = RequestsClient('localhost', path_prefix='/api/v1')
+        client = RequestsClient('localhost', path_prefix='api/v1')
         expected = 'http://localhost/api/v1/test'
         self.assertEqual(client.url_for('test'), expected)
         self.assertEqual(client.url_for('/test'), expected)

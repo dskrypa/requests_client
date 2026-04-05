@@ -4,38 +4,63 @@ Misc utilities.
 :author: Doug Skrypa
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from functools import wraps, partial
+import sys
+from functools import partial, wraps
 from operator import attrgetter
 from threading import Lock
-from time import sleep, monotonic
-from typing import Optional, Callable
+from time import monotonic, sleep
+from typing import TYPE_CHECKING, Any, Callable, Generic, ParamSpec, Self, TypeVar, overload
+
+if TYPE_CHECKING:
+    from requests import Response
+
+    from .base import BaseClient
 
 __all__ = ['proxy_bypass_append', 'rate_limited', 'format_path_prefix']
 log = logging.getLogger(__name__)
 
+T = TypeVar('T')
+P = ParamSpec('P')
 
-class UrlPart:
+if sys.version_info >= (3, 13):
+    U = TypeVar('U', default=str, bound=str | int | None)
+else:
+    U = TypeVar('U', bound=str | int | None)
+
+
+class UrlPart(Generic[U]):
     """Part of a URL.  Enables cached values that rely on this value to be reset if this value is changed"""
 
     __slots__ = ('formatter', 'name')
 
-    def __init__(self, formatter: Callable = None):
+    def __init__(self, formatter: Callable[[U | str | None], U] | None = None):
         self.formatter = formatter
 
     def __set_name__(self, owner, name: str):
         self.name = name  # Note: when both __get__ and __set__ are defined, descriptor takes precedence over __dict__
 
-    def __get__(self, instance, owner):
-        try:
-            return instance.__dict__.get(self.name)
-        except AttributeError:
+    if TYPE_CHECKING:
+
+        @overload
+        def __get__(self, instance: None, owner: Any) -> Self: ...
+
+        @overload
+        def __get__(self, instance: object, owner: Any) -> U: ...
+
+    def __get__(self, instance: None | object, owner: Any) -> Self | U:
+        if instance is None:
             return self
 
-    def __set__(self, instance, value):
+        return instance.__dict__.get(self.name)  # type: ignore[return-value]
+
+    def __set__(self, instance, value: U | str | None):
         if self.formatter is not None:
             value = self.formatter(value)
+
         instance.__dict__[self.name] = value
         try:
             del instance.__dict__['_url_fmt']
@@ -51,7 +76,18 @@ class RequestMethod:
     def __set_name__(self, owner, name):
         self.method = name.upper()
 
-    def __get__(self, instance, owner):
+    if TYPE_CHECKING:
+
+        @overload
+        def __get__(self, instance: None, owner: Any) -> Self: ...
+
+        @overload
+        def __get__(self, instance: BaseClient, owner: Any) -> Callable[..., Response]: ...
+
+    def __get__(self, instance: None | BaseClient, owner: Any) -> Self | Callable[..., Response]:
+        if instance is None:
+            return self
+
         try:
             return partial(instance.request, self.method)
         except AttributeError:
@@ -71,27 +107,29 @@ def proxy_bypass_append(host: str):
         os.environ['no_proxy'] += ',' + host
 
 
-def rate_limited(interval: float = 0, log_lvl: int = logging.DEBUG):
+def rate_limited(
+    interval: float | str | attrgetter[float] = 0, log_lvl: int = logging.DEBUG
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """
     :param interval: Interval between allowed invocations in seconds
     :param log_lvl: The log level that should be used to indicate that the wrapped function is being delayed
     """
-    # noinspection PyTypeChecker
-    is_attrgetter = isinstance(interval, (attrgetter, str))
-    if is_attrgetter:
-        interval = attrgetter(interval) if isinstance(interval, str) else interval
+    if is_attr_getter := isinstance(interval, (attrgetter, str)):
+        interval: attrgetter[float]  # type: ignore[no-redef]
+        if isinstance(interval, str):
+            interval = attrgetter(interval)
 
-    def decorator(func):
-        last_call = 0
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        last_call: float | int = 0
         lock = Lock()
         log_fmt = 'Rate limited {} {!r} is being delayed {{:,.3f}} seconds'.format(
-            'method' if is_attrgetter else 'function', func.__name__
+            'method' if is_attr_getter else 'function', func.__name__
         )
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             nonlocal last_call, lock
-            obj_interval = interval(args[0]) if is_attrgetter else interval  # noqa
+            obj_interval: float = interval(args[0]) if is_attr_getter else interval  # type: ignore[operator,assignment]
             with lock:
                 elapsed = monotonic() - last_call
                 if elapsed < obj_interval:
@@ -106,8 +144,10 @@ def rate_limited(interval: float = 0, log_lvl: int = logging.DEBUG):
     return decorator
 
 
-def format_path_prefix(value: Optional[str]) -> str:
+def format_path_prefix(value: str | None) -> str:
     if value:
-        value = value if not value.startswith('/') else value[1:]
-        return value if value.endswith('/') else value + '/'
+        if value.startswith('/'):
+            value = value[1:]
+        return value if value.endswith('/') else value + '/'  # noqa
+
     return ''

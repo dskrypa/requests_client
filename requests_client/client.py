@@ -8,19 +8,19 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Union, Optional, Callable, MutableMapping, Any, overload
+from typing import TYPE_CHECKING, Any, Callable, MutableMapping, overload
 from weakref import finalize
 
-from requests import RequestException, Session, Response
+from requests import RequestException, Response, Session
 
 from .base import BaseClient, Bool
-from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
+from .user_agent import USER_AGENT_SCRIPT_CONTACT_OS, generate_user_agent
 from .utils import rate_limited
 
 __all__ = ['RequestsClient']
 log = logging.getLogger(__name__)
 
-OptStr = Optional[str]
+OptStr = str | None
 
 
 class RequestsClient(BaseClient):
@@ -60,34 +60,35 @@ class RequestsClient(BaseClient):
       specified.
     """
 
-    @overload
-    def __init__(
-        self,
-        host_or_url: str,
-        port: Union[int, str, None] = None,
-        *,
-        scheme: OptStr = None,
-        path_prefix: OptStr = None,
-        raise_errors: Bool = True,
-        exc: Callable[[Union[RequestException, Response], str], Exception] = None,
-        headers: MutableMapping[str, Any] = None,
-        verify: Union[None, str, bool] = None,
-        user_agent_fmt: OptStr = USER_AGENT_SCRIPT_CONTACT_OS,
-        log_lvl: int = logging.DEBUG,
-        log_params: Bool = True,
-        log_data: Bool = False,
-        rate_limit: float = 0,
-        session_fn: Callable[..., Session] = Session,
-        local_sessions: Bool = False,
-        nopath: Bool = False,
-        **kwargs,
-    ):
-        ...
+    if TYPE_CHECKING:
+
+        @overload  # type: ignore[misc]
+        def __init__(  # noqa
+            self,
+            host_or_url: str,
+            port: int | str | None = None,
+            *,
+            scheme: OptStr = None,
+            path_prefix: OptStr = None,
+            raise_errors: Bool = True,
+            exc: Callable[[RequestException | Response, str], Exception] | None = None,
+            headers: MutableMapping[str, Any] | None = None,
+            verify: None | str | bool = None,
+            user_agent_fmt: OptStr = USER_AGENT_SCRIPT_CONTACT_OS,
+            log_lvl: int = logging.DEBUG,
+            log_params: Bool = True,
+            log_data: Bool = False,
+            rate_limit: float = 0,
+            session_fn: Callable[..., Session] = Session,
+            local_sessions: Bool = False,
+            nopath: Bool = False,
+            **kwargs,
+        ): ...
 
     def __init__(
         self,
         host_or_url: str,
-        port: Union[int, str, None] = None,
+        port: int | str | None = None,
         *,
         user_agent_fmt: OptStr = USER_AGENT_SCRIPT_CONTACT_OS,
         rate_limit: float = 0,
@@ -108,7 +109,7 @@ class RequestsClient(BaseClient):
         self.__finalizer = finalize(self, self.__close)
         self._rate_limit = rate_limit
         if rate_limit:
-            self.request = rate_limited(rate_limit)(self.request)
+            self.request = rate_limited(rate_limit)(self.request)  # type: ignore[method-assign]
 
     def _init_session(self) -> Session:
         session = self._session_fn(**self._session_kwargs)
@@ -134,10 +135,10 @@ class RequestsClient(BaseClient):
                 return self.__session
         else:
             try:
-                return self.__local.session
+                return self.__local.session  # type: ignore[union-attr]
             except AttributeError:
-                self.__local.session = self._init_session()
-                return self.__local.session
+                self.__local.session = self._init_session()  # type: ignore[union-attr]
+                return self.__local.session  # type: ignore[union-attr]
 
     @session.setter
     def session(self, value: Session):
@@ -145,7 +146,7 @@ class RequestsClient(BaseClient):
             with self.__lock:
                 self.__session = value  # noqa
         else:
-            self.__local.session = value
+            self.__local.session = value  # type: ignore[union-attr]
 
     def request(
         self,

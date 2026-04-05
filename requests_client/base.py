@@ -8,33 +8,34 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import Union, Callable, MutableMapping, Any, Mapping
+from typing import Any, Callable, Mapping, MutableMapping
 from urllib.parse import urlencode, urlparse
 
-from .utils import UrlPart, RequestMethod, format_path_prefix
+from .utils import RequestMethod, UrlPart, format_path_prefix
 
 __all__ = ['BaseClient']
 log = logging.getLogger(__name__)
-Bool = Union[bool, Any]
+
+Bool = bool | Any
 
 
 class BaseClient(ABC):
-    scheme = UrlPart()
-    host = UrlPart()
-    port = UrlPart(lambda v: int(v) if v is not None else v)
-    path_prefix = UrlPart(format_path_prefix)
+    scheme: UrlPart[str | None] = UrlPart()
+    host: UrlPart[str] = UrlPart()
+    port: UrlPart[int | None] = UrlPart(lambda v: int(v) if v is not None else v)
+    path_prefix: UrlPart[str] = UrlPart(format_path_prefix)
 
     def __init__(
         self,
         host_or_url: str,
-        port: Union[int, str, None] = None,
+        port: int | str | None = None,
         *,
-        scheme: str = None,
-        path_prefix: str = None,
+        scheme: str | None = None,
+        path_prefix: str | None = None,
         raise_errors: Bool = True,
-        exc: Callable = None,
-        headers: MutableMapping[str, Any] = None,
-        verify: Union[None, str, bool] = None,
+        exc: Callable | None = None,
+        headers: MutableMapping[str, Any] | None = None,
+        verify: None | str | bool = None,
         log_lvl: int = logging.DEBUG,
         log_params: Bool = True,
         log_data: Bool = False,
@@ -72,7 +73,7 @@ class BaseClient(ABC):
         host_port = f'{self.host}:{self.port}' if self.port else self.host
         return f'{self.scheme}://{host_port}/{{}}'
 
-    def url_for(self, path: str, params: Mapping[str, Any] = None, relative: Bool = True) -> str:
+    def url_for(self, path: str, params: Mapping[str, Any] | None = None, relative: Bool = True) -> str:
         """
         :param path: The URL path to retrieve
         :param params: Request query parameters
@@ -94,19 +95,15 @@ class BaseClient(ABC):
         url: str,
         path: str = '',
         relative: Bool = True,
-        params: Mapping[str, Any] = None,
+        params: Mapping[str, Any] | None = None,
         log_params: Bool = None,
         log_data: Bool = None,
-        kwargs: Mapping[str, Any] = None,
+        kwargs: Mapping[str, Any] | None = None,
     ):
         if params and (log_params or (log_params is None and self.log_params)):
             url = self.url_for(path, params, relative=relative)
 
-        if (log_data or (log_data is None and self.log_data)) and (data := kwargs.get('data') or kwargs.get('json')):
-            data_repr = f' < {data=}'
-        else:
-            data_repr = ''
-
+        data_repr = _get_data_repr(log_data or (log_data is None and self.log_data), kwargs)
         log.log(self.log_lvl, f'{method} -> {url}{data_repr}')
 
     get = RequestMethod()
@@ -131,3 +128,11 @@ class BaseClient(ABC):
         **kwargs,
     ):
         raise NotImplementedError
+
+
+def _get_data_repr(should_log: Bool, kwargs: Mapping[str, Any] | None) -> str:
+    if should_log and kwargs:
+        if data := kwargs.get('data') or kwargs.get('json'):
+            return f' < {data=}'  # noqa
+
+    return ''

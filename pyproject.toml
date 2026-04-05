@@ -28,7 +28,7 @@ Issues = 'https://github.com/dskrypa/requests_client/issues'
 
 [project.optional-dependencies]
 # Run `pre-commit install --install-hooks` to install hooks
-dev = ['ipython', 'pre-commit', 'coverage', 'sphinx', 'sphinx_rtd_theme', 'flask', 'requests', 'httpx']
+dev = ['ipython', 'pre-commit', 'coverage', 'sphinx', 'sphinx_rtd_theme', 'flask', 'requests', 'httpx', 'ruff']
 async = ['httpx']
 sync = ['requests']
 

@@ -1,7 +1,7 @@
 __title__ = 'requests_client'
 __description__ = 'Requests Client'
 __url__ = 'https://github.com/dskrypa/requests_client'
-__version__ = '2026.01.24'
+__version__ = '2026.04.05-1'
 __author__ = 'Doug Skrypa'
 __author_email__ = 'dskrypa@gmail.com'
 __license__ = 'Apache 2.0'

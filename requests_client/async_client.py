@@ -10,13 +10,13 @@ import logging
 import warnings
 from asyncio import Lock, sleep
 from time import monotonic
-from typing import Union, Callable, MutableMapping, Any, Awaitable, overload
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, MutableMapping, overload
 
 from httpx import AsyncClient, HTTPError, Response
 from httpx._client import ClientState
 
 from .base import BaseClient, Bool
-from .user_agent import generate_user_agent, USER_AGENT_SCRIPT_CONTACT_OS
+from .user_agent import USER_AGENT_SCRIPT_CONTACT_OS, generate_user_agent
 
 __all__ = ['AsyncRequestsClient']
 log = _log = logging.getLogger(__name__)
@@ -60,33 +60,34 @@ class AsyncRequestsClient(BaseClient):
       specified.
     """
 
-    @overload
-    def __init__(
-        self,
-        host_or_url: str,
-        port: Union[int, str, None] = None,
-        *,
-        scheme: str = None,
-        path_prefix: str = None,
-        raise_errors: Bool = True,
-        exc: Callable = None,
-        headers: MutableMapping[str, Any] = None,
-        verify: Union[None, str, bool] = None,
-        user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
-        log_lvl: int = logging.DEBUG,
-        log_params: Bool = True,
-        log_data: Bool = False,
-        rate_limit: float = 0,
-        session_fn: Callable = AsyncClient,
-        nopath: Bool = False,
-        **kwargs,
-    ):
-        ...
+    if TYPE_CHECKING:
+
+        @overload  # type: ignore[misc]
+        def __init__(  # noqa
+            self,
+            host_or_url: str,
+            port: int | str | None = None,
+            *,
+            scheme: str | None = None,
+            path_prefix: str | None = None,
+            raise_errors: Bool = True,
+            exc: Callable | None = None,
+            headers: MutableMapping[str, Any] | None = None,
+            verify: None | str | bool = None,
+            user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
+            log_lvl: int = logging.DEBUG,
+            log_params: Bool = True,
+            log_data: Bool = False,
+            rate_limit: float = 0,
+            session_fn: Callable = AsyncClient,
+            nopath: Bool = False,
+            **kwargs,
+        ): ...
 
     def __init__(
         self,
         host_or_url: str,
-        port: Union[int, str, None] = None,
+        port: int | str | None = None,
         *,
         user_agent_fmt: str = USER_AGENT_SCRIPT_CONTACT_OS,
         rate_limit: float = 0,
@@ -100,7 +101,7 @@ class AsyncRequestsClient(BaseClient):
         self.__lock = Lock()
         self.__session = None  # type: AsyncClient | None
         self._rate_limit = rate_limit
-        self._last_req = 0
+        self._last_req: float | int = 0
 
     async def _init_session(self) -> AsyncClient:
         session = self._session_fn(**self._session_kwargs)
