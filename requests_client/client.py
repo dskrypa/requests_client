@@ -13,14 +13,15 @@ from weakref import finalize
 
 from requests import RequestException, Response, Session
 
-from .base import BaseClient, Bool
+from .base import BaseClient
 from .user_agent import USER_AGENT_SCRIPT_CONTACT_OS, generate_user_agent
 from .utils import rate_limited
 
+if TYPE_CHECKING:
+    from ._typing import Bool, OptStr
+
 __all__ = ['RequestsClient']
 log = logging.getLogger(__name__)
-
-OptStr = str | None
 
 
 class RequestsClient(BaseClient):

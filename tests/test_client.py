@@ -31,6 +31,14 @@ class RequestsClientTest(TestCase):
         self.assertEqual(client.port, 3456)
         self.assertEqual(client.path_prefix, 'api/v1/')
 
+    def test_init_with_base_url_nopath_and_prefix(self):
+        client = RequestsClient('https://localhost:1234/test', path_prefix='/api/v1', nopath=True)
+        self.assertEqual(client.path_prefix, 'api/v1/')
+
+    def test_init_with_base_url_nopath_no_prefix(self):
+        client = RequestsClient('https://localhost:1234/test', nopath=True)
+        self.assertEqual(client.path_prefix, '')
+
     def test_url_absolute_path(self):
         client = RequestsClient('localhost', path_prefix='/api/v1')
         expected = 'http://localhost/api/v2/test'

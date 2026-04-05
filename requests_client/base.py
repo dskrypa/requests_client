@@ -4,23 +4,26 @@ Facilitates submission of multiple requests for different endpoints to a single 
 :author: Doug Skrypa
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import Any, Callable, Mapping, MutableMapping
+from typing import TYPE_CHECKING, Any, Callable, Mapping, MutableMapping
 from urllib.parse import urlencode, urlparse
 
 from .utils import RequestMethod, UrlPart, format_path_prefix
 
+if TYPE_CHECKING:
+    from ._typing import Bool, OptStr
+
 __all__ = ['BaseClient']
 log = logging.getLogger(__name__)
 
-Bool = bool | Any
-
 
 class BaseClient(ABC):
-    scheme: UrlPart[str | None] = UrlPart()
+    scheme: UrlPart[str] = UrlPart()
     host: UrlPart[str] = UrlPart()
     port: UrlPart[int | None] = UrlPart(lambda v: int(v) if v is not None else v)
     path_prefix: UrlPart[str] = UrlPart(format_path_prefix)
@@ -30,8 +33,8 @@ class BaseClient(ABC):
         host_or_url: str,
         port: int | str | None = None,
         *,
-        scheme: str | None = None,
-        path_prefix: str | None = None,
+        scheme: OptStr = None,
+        path_prefix: OptStr = None,
         raise_errors: Bool = True,
         exc: Callable | None = None,
         headers: MutableMapping[str, Any] | None = None,
@@ -42,17 +45,7 @@ class BaseClient(ABC):
         nopath: Bool = False,
         **kwargs,
     ):
-        if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
-            parsed = urlparse(host_or_url)
-            self.host = parsed.hostname
-            port = port or parsed.port
-            scheme = scheme or parsed.scheme
-            path_prefix = path_prefix if nopath else path_prefix or parsed.path
-        else:
-            self.host = host_or_url
-            if self.host and ':' in self.host and port:
-                raise ValueError(f'Conflicting arguments: port provided twice (host_or_url={self.host!r}, {port=})')
-
+        self.host, port, scheme, path_prefix = _normalize_args(host_or_url, port, scheme, path_prefix, nopath)
         self.scheme = scheme or 'http'
         self.port = port
         self.path_prefix = path_prefix
@@ -136,3 +129,19 @@ def _get_data_repr(should_log: Bool, kwargs: Mapping[str, Any] | None) -> str:
             return f' < {data=}'  # noqa
 
     return ''
+
+
+def _normalize_args(
+    host_or_url: str, port: int | OptStr, scheme: OptStr, path_prefix: OptStr, nopath: Bool
+) -> tuple[str, int | OptStr, OptStr, OptStr]:
+    if host_or_url and re.match('^[a-zA-Z]+://', host_or_url):  # If it begins with a scheme, assume it is a url
+        parsed = urlparse(host_or_url)
+        if not nopath and not path_prefix:
+            path_prefix = parsed.path
+
+        return parsed.hostname, port or parsed.port, scheme or parsed.scheme, path_prefix  # type: ignore[return-value]
+
+    if host_or_url and ':' in host_or_url and port:
+        raise ValueError(f'Conflicting arguments: port provided twice ({host_or_url=}, {port=})')
+
+    return host_or_url, port, scheme, path_prefix

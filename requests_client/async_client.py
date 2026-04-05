@@ -15,8 +15,11 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, MutableMapping, over
 from httpx import AsyncClient, HTTPError, Response
 from httpx._client import ClientState
 
-from .base import BaseClient, Bool
+from .base import BaseClient
 from .user_agent import USER_AGENT_SCRIPT_CONTACT_OS, generate_user_agent
+
+if TYPE_CHECKING:
+    from ._typing import Bool, OptStr
 
 __all__ = ['AsyncRequestsClient']
 log = _log = logging.getLogger(__name__)
@@ -68,8 +71,8 @@ class AsyncRequestsClient(BaseClient):
             host_or_url: str,
             port: int | str | None = None,
             *,
-            scheme: str | None = None,
-            path_prefix: str | None = None,
+            scheme: OptStr = None,
+            path_prefix: OptStr = None,
             raise_errors: Bool = True,
             exc: Callable | None = None,
             headers: MutableMapping[str, Any] | None = None,
